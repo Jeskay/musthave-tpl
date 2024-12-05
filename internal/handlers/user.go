@@ -11,7 +11,7 @@ import (
 func Login(svc *internal.LoyaltyService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var user dto.User
-		if err := ctx.ShouldBindJSON(user); err != nil {
+		if err := ctx.ShouldBindJSON(&user); err != nil {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
@@ -20,7 +20,7 @@ func Login(svc *internal.LoyaltyService) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		ctx.Set("Login", token)
+		ctx.Set("Token", token)
 		ctx.Status(http.StatusOK)
 	}
 }
@@ -28,15 +28,16 @@ func Login(svc *internal.LoyaltyService) gin.HandlerFunc {
 func Register(svc *internal.LoyaltyService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var user dto.User
-		if err := ctx.ShouldBindJSON(user); err != nil {
+		if err := ctx.ShouldBindJSON(&user); err != nil {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		err := svc.Register(user.Login, user.Password)
+		token, err := svc.Register(user.Login, user.Password)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-		ctx.JSON(http.StatusOK, user)
+		ctx.Set("Token", token)
+		ctx.Status(http.StatusOK)
 	}
 }

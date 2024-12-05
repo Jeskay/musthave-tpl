@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log/slog"
 	"musthave_tpl/internal"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type PostgresStorage struct {
@@ -16,12 +18,13 @@ func NewPostgresStorage(db *sql.DB, logger slog.Handler) (*PostgresStorage, erro
 		logger: slog.New(logger),
 		db:     db,
 	}
-	return ps, nil
+	err := ps.init()
+	return ps, err
 }
 
 func (ps *PostgresStorage) init() error {
 	query := `
-		CREATE TABLE IF NOT EXIST user (
+		CREATE TABLE IF NOT EXISTS users (
 			login varchar(500) PRIMARY KEY UNIQUE,
 			password text,
 			balance bigint
@@ -33,7 +36,7 @@ func (ps *PostgresStorage) init() error {
 
 func (ps *PostgresStorage) AddUser(user internal.User) error {
 	query := `
-		INSERT INTO user (name, password)
+		INSERT INTO users (login, password)
 		VALUES ($1, $2);
 	`
 	_, err := ps.db.Exec(query, user.Login, user.Password)
@@ -44,21 +47,25 @@ func (ps *PostgresStorage) AddUser(user internal.User) error {
 }
 
 func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
-	var user internal.User
+	var (
+		userLogin    string
+		userPassword string
+		userBalance  sql.NullInt64
+	)
 	query := `
 		SELECT 
 			* 
-		FROM user 
+		FROM users 
 		WHERE login = $1
 	`
 	row := ps.db.QueryRow(query, login)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
-	if err := row.Scan(&user.Login, &user.Password, &user.Balance); err != nil {
+	if err := row.Scan(&userLogin, &userPassword, &userBalance); err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return &internal.User{Login: userLogin, Password: userPassword, Balance: userBalance.Int64}, nil
 }
 
 func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) {

@@ -16,7 +16,7 @@ func main() {
 	var conf config.LoyaltyConfig
 	zapL := zap.Must(zap.NewProduction())
 
-	if err := env.Parse(conf); err != nil {
+	if err := env.Parse(&conf); err != nil {
 		zapL.Fatal("failed to parse environment variables", zap.Error(err))
 	}
 
@@ -24,11 +24,11 @@ func main() {
 	if err != nil {
 		zapL.Fatal("failed to connect to the database", zap.Error(err))
 	}
-	storage, err := db.NewPostgresStorage(database, zapslog.NewHandler(zapL.Core(), nil))
+	storage, err := db.NewPostgresStorage(database, zapslog.NewHandler(zapL.Core()))
 	if err != nil {
 		zapL.Fatal("failed to initialize database", zap.Error(err))
 	}
-	service := internal.NewLoyaltyService(&conf, zapslog.NewHandler(zapL.Core(), nil), storage)
+	service := internal.NewLoyaltyService(&conf, zapslog.NewHandler(zapL.Core()), storage)
 
 	r := routes.Init(service)
 

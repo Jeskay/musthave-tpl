@@ -53,10 +53,14 @@ func (s *LoyaltyService) Authenticate(tokenString string) (*User, error) {
 	return s.storage.UserByLogin(login)
 }
 
-func (s *LoyaltyService) Register(login string, password string) error {
+func (s *LoyaltyService) Register(login string, password string) (string, error) {
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return s.storage.AddUser(User{Login: login, Password: hex.EncodeToString(hash)})
+	err = s.storage.AddUser(User{Login: login, Password: hex.EncodeToString(hash)})
+	if err != nil {
+		return "", err
+	}
+	return s.authService.CreateToken(login)
 }
