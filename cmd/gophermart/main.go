@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"musthave_tpl/config"
-	"musthave_tpl/internal"
-	"musthave_tpl/internal/db"
-	"musthave_tpl/internal/routes"
+	"musthave_tpl/internal/gophermart"
+	"musthave_tpl/internal/gophermart/db"
+	"musthave_tpl/internal/gophermart/routes"
 
 	"github.com/caarlos0/env"
 	"go.uber.org/zap"
@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		zapL.Fatal("failed to initialize database", zap.Error(err))
 	}
-	service := internal.NewLoyaltyService(&conf, zapslog.NewHandler(zapL.Core()), storage)
+	service := gophermart.NewGophermartService(&conf, zapslog.NewHandler(zapL.Core()), storage)
 
 	r := routes.Init(service)
 

@@ -1,9 +1,10 @@
 package internal
 
 type User struct {
-	Login    string
-	Password string
-	Balance  int64
+	Login     string
+	Password  string
+	Balance   float64
+	Withdrawn float64
 }
 
 type Token struct {
