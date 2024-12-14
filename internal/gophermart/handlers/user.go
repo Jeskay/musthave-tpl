@@ -17,7 +17,11 @@ func Login(svc *gophermart.GophermartService) gin.HandlerFunc {
 		}
 		token, err := svc.Login(user.Login, user.Password)
 		if err != nil {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			if _, ok := err.(*gophermart.IncorrectPassword); ok {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 		ctx.Set("Token", token)
@@ -34,6 +38,10 @@ func Register(svc *gophermart.GophermartService) gin.HandlerFunc {
 		}
 		token, err := svc.Register(user.Login, user.Password)
 		if err != nil {
+			if _, ok := err.(*gophermart.UsedLoginError); ok {
+				ctx.AbortWithStatus(http.StatusConflict)
+				return
+			}
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}

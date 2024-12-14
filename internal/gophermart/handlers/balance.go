@@ -4,6 +4,7 @@ import (
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/dto"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +23,24 @@ func Balance(svc *gophermart.GophermartService) gin.HandlerFunc {
 
 func MakeWithdrawal(svc *gophermart.GophermartService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
+		var withdrawal dto.Withdrawal
+		login := ctx.GetString("Login")
+		err := ctx.ShouldBindJSON(&withdrawal)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		id, err := strconv.ParseInt(withdrawal.OrderId, 10, 64)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		err = svc.MakeWithdrawal(login, id, withdrawal.Sum)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		ctx.Status(http.StatusOK)
 	}
 }
 

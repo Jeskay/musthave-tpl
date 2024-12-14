@@ -37,16 +37,16 @@ func (s *GophermartService) Login(login string, password string) (string, error)
 	}
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
-		return "", err
+		return "", &IncorrectPassword{}
 	}
 	passHash, err := hex.DecodeString(user.Password)
 	if err != nil {
-		return "", err
+		return "", &IncorrectPassword{}
 	}
 	if bytes.Equal(hash, passHash) {
 		return s.authService.CreateToken(login)
 	}
-	return "", errors.New("invalid password")
+	return "", &IncorrectPassword{}
 }
 
 func (s *GophermartService) Authenticate(tokenString string) (*internal.User, error) {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"musthave_tpl/internal"
+	"musthave_tpl/internal/gophermart"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -52,11 +53,23 @@ func (ps *PostgresStorage) init() error {
 }
 
 func (ps *PostgresStorage) AddUser(user internal.User) error {
+	row := ps.db.QueryRow(`SELECT COUNT(*) FROM users WHERE login = $1`, user.Login)
+	if row.Err() != nil {
+		return row.Err()
+	}
+	var count int64
+	err := row.Scan(count)
+	if err != nil {
+		return err
+	}
+	if count != 0 {
+		return &gophermart.UsedLoginError{}
+	}
 	query := `
 		INSERT INTO users (login, password)
 		VALUES ($1, $2);
 	`
-	_, err := ps.db.Exec(query, user.Login, user.Password)
+	_, err = ps.db.Exec(query, user.Login, user.Password)
 	if err != nil {
 		return err
 	}
