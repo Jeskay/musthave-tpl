@@ -10,6 +10,7 @@ import (
 	"musthave_tpl/internal/auth"
 	"musthave_tpl/internal/loyalty"
 	"musthave_tpl/internal/utils"
+	"time"
 )
 
 type GophermartService struct {
@@ -101,7 +102,14 @@ func (s *GophermartService) Withdrawals(login string) ([]internal.Transaction, e
 }
 
 func (s *GophermartService) MakeWithdrawal(login string, order int64, amount float64) error {
-	_, err := s.storage.AddTransaction(internal.Transaction{User: login, Amount: amount, Id: order})
+	user, err := s.storage.UserByLogin(login)
+	if err != nil {
+		return nil
+	}
+	if user.Balance < amount {
+		return &NotEnoughFunds{}
+	}
+	_, err = s.storage.AddTransaction(internal.Transaction{User: login, Amount: amount, Id: order, Date: time.Now()})
 	if err != nil {
 		return err
 	}

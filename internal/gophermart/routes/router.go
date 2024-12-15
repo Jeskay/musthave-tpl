@@ -15,7 +15,11 @@ func Init(svc *gophermart.GophermartService) *gin.Engine {
 		apiGroup.POST("/register", handlers.Register(svc), middleware.Authenticate(svc))
 		apiGroup.POST("/login", handlers.Login(svc), middleware.Authenticate(svc))
 
-		apiGroup.GET("/withdrawals", handlers.Withdrawals(svc), middleware.Authorize(svc))
+		//apiGroup.GET("/withdrawals", handlers.Withdrawals(svc), middleware.Authorize(svc))
+		gWithdrawals := apiGroup.Group("/withdrawals", middleware.Authorize(svc))
+		{
+			gWithdrawals.GET("", handlers.Withdrawals(svc))
+		}
 		gOrders := apiGroup.Group("/orders", middleware.Authorize(svc))
 		{
 			gOrders.POST("/:order", handlers.PostOrder(svc))

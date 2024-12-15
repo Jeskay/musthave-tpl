@@ -37,6 +37,10 @@ func MakeWithdrawal(svc *gophermart.GophermartService) gin.HandlerFunc {
 		}
 		err = svc.MakeWithdrawal(login, id, withdrawal.Sum)
 		if err != nil {
+			if _, ok := err.(*gophermart.NotEnoughFunds); ok {
+				ctx.AbortWithStatus(http.StatusPaymentRequired)
+				return
+			}
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
@@ -50,6 +54,10 @@ func Withdrawals(svc *gophermart.GophermartService) gin.HandlerFunc {
 		withdrawals, err := svc.Withdrawals(login)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+		if len(withdrawals) == 0 {
+			ctx.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 		ctx.JSON(http.StatusOK, dto.NewWithdrawals(withdrawals))

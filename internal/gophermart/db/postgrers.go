@@ -30,8 +30,8 @@ func (ps *PostgresStorage) init() error {
 		CREATE TABLE IF NOT EXISTS users (
 			login varchar(500) PRIMARY KEY UNIQUE,
 			password text,
-			balance double precision
-			withdrawn double precision
+			balance double precision DEFAULT 0,
+			withdrawn double precision DEFAULT 0
 		);
 		CREATE TABLE IF NOT EXISTS orders (
 			user_login varchar(500) REFERENCES users (login),
@@ -41,9 +41,9 @@ func (ps *PostgresStorage) init() error {
 			uploaded_at timestamptz
 		);
 		CREATE TABLE IF NOT EXISTS withdrawals (
-			id SERIAL PRIMARY KEY
+			id SERIAL PRIMARY KEY,
 			user_login varchar(500) REFERENCES users (login),
-			order_id bigint REFERENCES orders (id),
+			order_id bigint,
 			amount double precision,
 			processed_at timestamptz
 		);
@@ -58,7 +58,7 @@ func (ps *PostgresStorage) AddUser(user internal.User) error {
 		return row.Err()
 	}
 	var count int64
-	err := row.Scan(count)
+	err := row.Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -78,13 +78,17 @@ func (ps *PostgresStorage) AddUser(user internal.User) error {
 
 func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 	var (
-		userLogin    string
-		userPassword string
-		userBalance  sql.NullFloat64
+		userLogin     string
+		userPassword  string
+		userBalance   sql.NullFloat64
+		userWithdrawn sql.NullFloat64
 	)
 	query := `
 		SELECT 
-			* 
+			login,
+			password, 
+			balance,
+			withdrawn
 		FROM users 
 		WHERE login = $1
 	`
@@ -92,10 +96,15 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
-	if err := row.Scan(&userLogin, &userPassword, &userBalance); err != nil {
+	if err := row.Scan(&userLogin, &userPassword, &userBalance, &userWithdrawn); err != nil {
 		return nil, err
 	}
-	return &internal.User{Login: userLogin, Password: userPassword, Balance: userBalance.Float64}, nil
+	return &internal.User{
+		Login:     userLogin,
+		Password:  userPassword,
+		Balance:   userBalance.Float64,
+		Withdrawn: userWithdrawn.Float64,
+	}, nil
 }
 
 func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) {
@@ -134,6 +143,21 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 }
 
 func (ps *PostgresStorage) AddOrder(order internal.Order) error {
+	rows, err := ps.db.Query(`SELECT (user_login) FROM orders WHERE id = $1`, order.Number)
+	if err != nil {
+		return err
+	}
+	if rows.Next() {
+		var login string
+		err := rows.Scan(&login)
+		if err != nil {
+			return err
+		}
+		if login == order.User.Login {
+			return &gophermart.OrderExists{}
+		}
+		return &gophermart.OrderUsed{}
+	}
 	ctx := context.Background()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -189,8 +213,8 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 	}
 	query2 := `
 	UPDATE users
-	SET balance = balance - $1
-	SET withdrawn = withdrawn + $1
+	SET balance = balance - $1,
+	withdrawn = withdrawn + $1
 	WHERE login = $2
 	`
 	_, err = tx.ExecContext(ctx, query2, transaction.Amount, transaction.User)
@@ -204,7 +228,12 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 
 func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transaction, error) {
 	query := `
-	SELECT * FROM withdrawals
+	SELECT 
+		user_login,
+		order_id,
+		amount,
+		processed_at
+	 FROM withdrawals
 	WHERE user_login = $1
 	`
 	rows, err := ps.db.Query(query, login)
