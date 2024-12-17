@@ -18,7 +18,7 @@ type AuthService struct {
 	ExpiresAt time.Duration
 }
 
-func NewAuthService(conf *config.LoyaltyConfig) *AuthService {
+func NewAuthService(conf *config.GophermartConfig) *AuthService {
 	return &AuthService{
 		SecretKey: []byte(conf.TokenKey),
 		ExpiresAt: time.Hour * 48,

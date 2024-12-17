@@ -18,10 +18,10 @@ type GophermartService struct {
 	authService    *auth.AuthService
 	loyaltyService *loyalty.LoyaltyService
 	logger         *slog.Logger
-	config         *config.LoyaltyConfig
+	config         *config.GophermartConfig
 }
 
-func NewGophermartService(config *config.LoyaltyConfig, logger slog.Handler, storage internal.Storage) *GophermartService {
+func NewGophermartService(config *config.GophermartConfig, logger slog.Handler, storage internal.Storage) *GophermartService {
 	return &GophermartService{
 		logger:         slog.New(logger),
 		storage:        storage,
