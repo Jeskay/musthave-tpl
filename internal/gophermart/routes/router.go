@@ -22,7 +22,7 @@ func Init(svc *gophermart.GophermartService) *gin.Engine {
 		}
 		gOrders := apiGroup.Group("/orders", middleware.Authorize(svc))
 		{
-			gOrders.POST("/:order", handlers.PostOrder(svc))
+			gOrders.POST("", handlers.PostOrder(svc))
 			gOrders.GET("", handlers.Orders(svc))
 		}
 		gBalance := apiGroup.Group("/balance", middleware.Authorize(svc))

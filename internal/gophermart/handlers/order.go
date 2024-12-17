@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io"
 	"musthave_tpl/internal/gophermart"
 	"net/http"
 	"strconv"
@@ -30,9 +31,13 @@ func Orders(svc *gophermart.GophermartService) gin.HandlerFunc {
 
 func PostOrder(svc *gophermart.GophermartService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		order := ctx.Param("order")
+		data, err := io.ReadAll(ctx.Request.Body)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
 		login := ctx.GetString("Login")
-		orderId, err := strconv.ParseInt(order, 10, 64)
+		orderId, err := strconv.ParseInt(string(data), 10, 64)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
