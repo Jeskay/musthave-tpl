@@ -17,9 +17,9 @@ func main() {
 	var conf config.GophermartConfig
 	zapL := zap.Must(zap.NewProduction())
 
-	flag.StringVar(&conf.Address, "-a", "", "service run address")
-	flag.StringVar(&conf.DBConnection, "-d", "", "database connection address")
-	flag.StringVar(&conf.AccrualAddress, "-r", "", "accrual service address")
+	flag.StringVar(&conf.Address, "a", "", "service run address")
+	flag.StringVar(&conf.DBConnection, "d", "", "database connection address")
+	flag.StringVar(&conf.AccrualAddress, "r", "", "accrual service address")
 	flag.Parse()
 
 	if err := env.Parse(&conf); err != nil {
