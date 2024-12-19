@@ -3,6 +3,8 @@ package handlers
 import (
 	"io"
 	"musthave_tpl/internal/gophermart"
+	"musthave_tpl/internal/gophermart/dto"
+	"musthave_tpl/internal/utils"
 	"net/http"
 	"strconv"
 
@@ -25,7 +27,7 @@ func Orders(svc *gophermart.GophermartService) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		ctx.JSON(http.StatusOK, orders)
+		ctx.JSON(http.StatusOK, dto.NewOrders(orders))
 	}
 }
 
@@ -42,6 +44,10 @@ func PostOrder(svc *gophermart.GophermartService) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
+		if !utils.LuhnAlgorithm(string(data)) {
+			ctx.AbortWithStatus(http.StatusUnprocessableEntity)
+			return
+		}
 		if err := svc.AddOrder(login, orderId); err != nil {
 			if _, ok := err.(*gophermart.OrderExists); ok {
 				ctx.AbortWithStatus(http.StatusOK)
@@ -51,13 +57,9 @@ func PostOrder(svc *gophermart.GophermartService) gin.HandlerFunc {
 				ctx.AbortWithStatus(http.StatusConflict)
 				return
 			}
-			if _, ok := err.(*gophermart.InvalidOrderNumber); ok {
-				ctx.AbortWithStatus(http.StatusUnprocessableEntity)
-				return
-			}
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-		ctx.Status(http.StatusCreated)
+		ctx.Status(http.StatusAccepted)
 	}
 }

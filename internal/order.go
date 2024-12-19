@@ -1,16 +1,19 @@
 package internal
 
+import "time"
+
 type Order struct {
-	User    User
-	Number  int64
-	Status  OrderStatus
-	Accrual float64
+	User       User
+	Number     int64
+	Status     OrderStatus
+	Accrual    float64
+	UploadedAt time.Time
 }
 
 type OrderStatus string
 
 const (
-	Registered = "REGISTERED"
+	New        = "NEW"
 	Invalid    = "INVALID"
 	Processing = "PROCESSING"
 	Processed  = "PROCESSED"

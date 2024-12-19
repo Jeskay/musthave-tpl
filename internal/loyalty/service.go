@@ -31,6 +31,9 @@ func (s *LoyaltyService) LoyaltyAccrual(orderId int64) (*internal.Order, error) 
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode == http.StatusNoContent {
+		return nil, nil
+	}
 	err = json.NewDecoder(res.Body).Decode(&order)
 	if err != nil {
 		return nil, err

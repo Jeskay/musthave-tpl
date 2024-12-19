@@ -3,7 +3,6 @@ package gophermart
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
 	"log/slog"
 	"musthave_tpl/config"
 	"musthave_tpl/internal"
@@ -79,9 +78,11 @@ func (s *GophermartService) AddOrder(login string, orderId int64) error {
 		return err
 	}
 	if order == nil {
-		return errors.New("response conversion failed")
+		order = &internal.Order{
+			Number: orderId,
+			Status: internal.New,
+		}
 	}
-
 	order.User = internal.User{Login: login}
 	err = s.storage.AddOrder(*order)
 	if err != nil {

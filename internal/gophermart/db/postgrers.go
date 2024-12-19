@@ -110,7 +110,11 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) {
 	query := `
 		SELECT
-			*
+			id,
+			user_login,
+			status,
+			accrual,
+			uploaded_at
 		FROM orders
 		WHERE user_login = $1
 		ORDER BY uploaded_at ASC;
@@ -133,10 +137,11 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 			return nil, err
 		}
 		orders = append(orders, internal.Order{
-			User:    internal.User{Login: user_login},
-			Number:  id,
-			Status:  internal.OrderStatus(status),
-			Accrual: accrual,
+			User:       internal.User{Login: user_login},
+			Number:     id,
+			Status:     internal.OrderStatus(status),
+			Accrual:    accrual,
+			UploadedAt: uploaded_at,
 		})
 	}
 	return orders, nil
