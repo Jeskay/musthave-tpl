@@ -61,10 +61,12 @@ func (s *GophermartService) Authenticate(tokenString string) (*internal.User, er
 func (s *GophermartService) Register(login string, password string) (string, error) {
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
+		s.logger.Error("", slog.String("error", err.Error()))
 		return "", err
 	}
 	err = s.storage.AddUser(internal.User{Login: login, Password: hex.EncodeToString(hash)})
 	if err != nil {
+		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return "", err
 	}
 	return s.authService.CreateToken(login)
@@ -73,6 +75,7 @@ func (s *GophermartService) Register(login string, password string) (string, err
 func (s *GophermartService) AddOrder(login string, orderId int64) error {
 	order, err := s.loyaltyService.LoyaltyAccrual(orderId)
 	if err != nil {
+		s.logger.Error("loyalty service", slog.String("error", err.Error()))
 		return err
 	}
 	if order == nil {
@@ -82,6 +85,7 @@ func (s *GophermartService) AddOrder(login string, orderId int64) error {
 	order.User = internal.User{Login: login}
 	err = s.storage.AddOrder(*order)
 	if err != nil {
+		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -91,6 +95,7 @@ func (s *GophermartService) AddOrder(login string, orderId int64) error {
 func (s *GophermartService) Orders(login string) ([]internal.Order, error) {
 	orders, err := s.storage.OrdersByUser(login)
 	if err != nil {
+		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return nil, err
 	}
 	return orders, nil
@@ -104,6 +109,7 @@ func (s *GophermartService) Withdrawals(login string) ([]internal.Transaction, e
 func (s *GophermartService) MakeWithdrawal(login string, order int64, amount float64) error {
 	user, err := s.storage.UserByLogin(login)
 	if err != nil {
+		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return nil
 	}
 	if user.Balance < amount {
@@ -111,6 +117,7 @@ func (s *GophermartService) MakeWithdrawal(login string, order int64, amount flo
 	}
 	_, err = s.storage.AddTransaction(internal.Transaction{User: login, Amount: amount, Id: order, Date: time.Now()})
 	if err != nil {
+		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return err
 	}
 	return nil
