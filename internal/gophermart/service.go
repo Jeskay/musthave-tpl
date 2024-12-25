@@ -71,15 +71,15 @@ func (s *GophermartService) Register(login string, password string) (string, err
 	return s.authService.CreateToken(login)
 }
 
-func (s *GophermartService) AddOrder(login string, orderId int64) error {
-	order, err := s.loyaltyService.LoyaltyAccrual(orderId)
+func (s *GophermartService) AddOrder(login string, orderID int64) error {
+	order, err := s.loyaltyService.LoyaltyAccrual(orderID)
 	if err != nil {
 		s.logger.Error("loyalty service", slog.String("error", err.Error()))
 		return err
 	}
 	if order == nil {
 		order = &internal.Order{
-			Number: orderId,
+			Number: orderID,
 			Status: internal.New,
 		}
 	}
@@ -116,7 +116,7 @@ func (s *GophermartService) MakeWithdrawal(login string, order int64, amount flo
 	if user.Balance < amount {
 		return &NotEnoughFunds{}
 	}
-	_, err = s.storage.AddTransaction(internal.Transaction{User: login, Amount: amount, Id: order, Date: time.Now()})
+	_, err = s.storage.AddTransaction(internal.Transaction{User: login, Amount: amount, ID: order, Date: time.Now()})
 	if err != nil {
 		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return err

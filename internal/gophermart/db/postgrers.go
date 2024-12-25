@@ -123,25 +123,28 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 	if err != nil {
 		return nil, err
 	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
 	var orders []internal.Order
 	for rows.Next() {
 		var (
-			id          int64
-			user_login  string
-			status      string
-			accrual     float64
-			uploaded_at time.Time
+			id         int64
+			userLogin  string
+			status     string
+			accrual    float64
+			uploadedAt time.Time
 		)
-		err := rows.Scan(&id, &user_login, &status, &accrual, &uploaded_at)
+		err := rows.Scan(&id, &userLogin, &status, &accrual, &uploadedAt)
 		if err != nil {
 			return nil, err
 		}
 		orders = append(orders, internal.Order{
-			User:       internal.User{Login: user_login},
+			User:       internal.User{Login: userLogin},
 			Number:     id,
 			Status:     internal.OrderStatus(status),
 			Accrual:    accrual,
-			UploadedAt: uploaded_at,
+			UploadedAt: uploadedAt,
 		})
 	}
 	return orders, nil
@@ -150,6 +153,9 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 	rows, err := ps.db.Query(`SELECT (user_login) FROM orders WHERE id = $1`, order.Number)
 	if err != nil {
+		return err
+	}
+	if rows.Err() != nil {
 		return err
 	}
 	if rows.Next() {
@@ -211,7 +217,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 	INSERT INTO withdrawals (user_login, order_id, amount, processed_at)
 	VALUES ($1, $2, $3, $4);
 	`
-	_, err = tx.ExecContext(ctx, query1, transaction.User, transaction.Id, transaction.Amount, transaction.Date)
+	_, err = tx.ExecContext(ctx, query1, transaction.User, transaction.ID, transaction.Amount, transaction.Date)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -245,6 +251,9 @@ func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transact
 	if err != nil {
 		return nil, err
 	}
+	if rows.Err() != nil {
+		return nil, err
+	}
 	var transactions []internal.Transaction
 	for rows.Next() {
 		var (
@@ -257,7 +266,7 @@ func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transact
 		if err != nil {
 			return nil, err
 		}
-		transactions = append(transactions, internal.Transaction{Id: id, Amount: amount, User: login, Date: date})
+		transactions = append(transactions, internal.Transaction{ID: id, Amount: amount, User: login, Date: date})
 	}
 	return transactions, nil
 }

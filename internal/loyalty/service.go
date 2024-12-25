@@ -24,14 +24,15 @@ func NewLoyaltyService(config *config.GophermartConfig, logger slog.Handler) *Lo
 	}
 }
 
-func (s *LoyaltyService) LoyaltyAccrual(orderId int64) (*internal.Order, error) {
-	param := s.config.AccrualAddress + "/api/orders/" + strconv.FormatInt(orderId, 10)
+func (s *LoyaltyService) LoyaltyAccrual(orderID int64) (*internal.Order, error) {
+	param := s.config.AccrualAddress + "/api/orders/" + strconv.FormatInt(orderID, 10)
 	var order dto.Order
 	res, err := s.client.Get(param)
 	if err != nil {
 		s.logger.Info("exited with error:", slog.Any("response data: ", res))
 		return nil, err
 	}
+	defer res.Body.Close()
 	if res.StatusCode == http.StatusNoContent {
 		return nil, nil
 	}

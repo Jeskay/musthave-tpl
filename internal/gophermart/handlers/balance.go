@@ -30,7 +30,7 @@ func MakeWithdrawal(svc *gophermart.GophermartService) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		id, err := strconv.ParseInt(withdrawal.OrderId, 10, 64)
+		id, err := strconv.ParseInt(withdrawal.OrderID, 10, 64)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return

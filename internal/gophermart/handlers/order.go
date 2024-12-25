@@ -39,7 +39,7 @@ func PostOrder(svc *gophermart.GophermartService) gin.HandlerFunc {
 			return
 		}
 		login := ctx.GetString("Login")
-		orderId, err := strconv.ParseInt(string(data), 10, 64)
+		orderID, err := strconv.ParseInt(string(data), 10, 64)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusBadRequest)
 			return
@@ -48,7 +48,7 @@ func PostOrder(svc *gophermart.GophermartService) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnprocessableEntity)
 			return
 		}
-		if err := svc.AddOrder(login, orderId); err != nil {
+		if err := svc.AddOrder(login, orderID); err != nil {
 			if _, ok := err.(*gophermart.OrderExists); ok {
 				ctx.AbortWithStatus(http.StatusOK)
 				return
