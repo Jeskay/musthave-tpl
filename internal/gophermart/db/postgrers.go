@@ -54,23 +54,26 @@ func (ps *PostgresStorage) init() error {
 	return err
 }
 
-func (ps *PostgresStorage) AddUser(user internal.User) error {
-	queryUser := sq.Select(
-		"COUNT(*)",
-	).From(
-		"users",
-	).Where(sq.Eq{"login": user.Login})
-
-	row := queryUser.RunWith(ps.db).QueryRow()
+func (ps *PostgresStorage) UserExist(user internal.User) (bool, error) {
+	row := ps.db.QueryRow(`SELECT COUNT(*) FROM users WHERE login = $1`, user.Login)
 	var count int64
 	err := row.Scan(&count)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if count != 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (ps *PostgresStorage) AddUser(user internal.User) error {
+	exist, err := ps.UserExist(user)
+	if err != nil {
+		return err
+	} else if !exist {
 		return &gophermart.UsedLoginError{}
 	}
-
 	queryAddUser := sq.Insert(
 		"users",
 	).Columns(
