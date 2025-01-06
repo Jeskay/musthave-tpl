@@ -204,7 +204,7 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 	}
 
 	balanceQuery := ps.pSql.Update(
-		"update",
+		"users",
 	).Set(
 		"balance",
 		sq.Expr("balance + ?", order.Accrual),
