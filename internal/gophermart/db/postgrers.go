@@ -16,12 +16,15 @@ import (
 type PostgresStorage struct {
 	db     *sql.DB
 	logger *slog.Logger
+	pSql   sq.StatementBuilderType
 }
 
 func NewPostgresStorage(db *sql.DB, logger slog.Handler) (*PostgresStorage, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)
 	ps := &PostgresStorage{
 		logger: slog.New(logger),
 		db:     db,
+		pSql:   psql,
 	}
 	err := ps.init()
 	return ps, err
@@ -74,14 +77,14 @@ func (ps *PostgresStorage) AddUser(user internal.User) error {
 	} else if !exist {
 		return &gophermart.UsedLoginError{}
 	}
-	queryAddUser := sq.Insert(
+	queryAddUser := ps.pSql.Insert(
 		"users",
 	).Columns(
 		"login",
 		"password",
 	).Values(user.Login, user.Password)
 
-	_, err = queryAddUser.RunWith(ps.db).Exec()
+	_, err = queryAddUser.Exec()
 	if err != nil {
 		return err
 	}
@@ -95,13 +98,13 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 		userBalance   sql.NullFloat64
 		userWithdrawn sql.NullFloat64
 	)
-	query := sq.Select(
+	query := ps.pSql.Select(
 		"login", "password", "balance", "withdrawn",
 	).From(
 		"users",
 	).Where(sq.Eq{"login": login})
 
-	row := query.RunWith(ps.db).QueryRow()
+	row := query.QueryRow()
 	if err := row.Scan(&userLogin, &userPassword, &userBalance, &userWithdrawn); err != nil {
 		return nil, err
 	}
@@ -114,7 +117,7 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 }
 
 func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) {
-	query := sq.Select(
+	query := ps.pSql.Select(
 		"id", "user_login", "status", "accrual", "uploaded_at",
 	).From(
 		"orders",
@@ -122,7 +125,7 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 		sq.Eq{"user_login": login},
 	).OrderBy("uploaded_at ASC")
 
-	rows, err := query.RunWith(ps.db).Query()
+	rows, err := query.Query()
 	if err != nil {
 		return nil, err
 	}
@@ -154,13 +157,13 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 }
 
 func (ps *PostgresStorage) AddOrder(order internal.Order) error {
-	queryUser := sq.Select(
+	queryUser := ps.pSql.Select(
 		"user_login",
 	).From(
 		"orders",
 	).Where(sq.Eq{"id": order.Number})
 
-	rows, err := queryUser.RunWith(ps.db).Query()
+	rows, err := queryUser.Query()
 	if err != nil {
 		return err
 	}
@@ -184,7 +187,7 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 		return err
 	}
 
-	orderQuery := sq.Insert(
+	orderQuery := ps.pSql.Insert(
 		"orders",
 	).Columns(
 		"id",
@@ -194,13 +197,13 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 		"uploaded_at",
 	).Values(order.Number, order.User.Login, order.Status, order.Accrual, time.Now())
 
-	_, err = orderQuery.RunWith(ps.db).ExecContext(ctx)
+	_, err = orderQuery.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	balanceQuery := sq.Update(
+	balanceQuery := ps.pSql.Update(
 		"update",
 	).Set(
 		"balance",
@@ -209,7 +212,7 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 		sq.Eq{"login": order.User.Login},
 	)
 
-	_, err = balanceQuery.RunWith(ps.db).ExecContext(ctx)
+	_, err = balanceQuery.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -224,7 +227,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 	if err != nil {
 		return nil, err
 	}
-	queryWithdraw := sq.Insert(
+	queryWithdraw := ps.pSql.Insert(
 		"withdrawals",
 	).Columns(
 		"user_login",
@@ -233,12 +236,12 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 		"processed_at",
 	).Values(transaction.User, transaction.ID, transaction.Amount, transaction.Date)
 
-	_, err = queryWithdraw.RunWith(ps.db).ExecContext(ctx)
+	_, err = queryWithdraw.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
-	queryUser := sq.Update(
+	queryUser := ps.pSql.Update(
 		"users",
 	).Set(
 		"balance",
@@ -247,7 +250,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 		"withdrawn",
 		sq.Expr("withdrawn + ?", transaction.Amount),
 	).Where(sq.Eq{"login": transaction.User})
-	_, err = queryUser.RunWith(ps.db).ExecContext(ctx)
+	_, err = queryUser.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -257,7 +260,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 }
 
 func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transaction, error) {
-	query := sq.Select(
+	query := ps.pSql.Select(
 		"user_login",
 		"order_id",
 		"amount",
@@ -266,7 +269,7 @@ func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transact
 		"withdrawals",
 	).Where(sq.Eq{"user_login": login})
 
-	rows, err := query.RunWith(ps.db).Query()
+	rows, err := query.Query()
 	if err != nil {
 		return nil, err
 	}
