@@ -16,7 +16,7 @@ import (
 type PostgresStorage struct {
 	db     *sql.DB
 	logger *slog.Logger
-	pSql   sq.StatementBuilderType
+	pSQL   sq.StatementBuilderType
 }
 
 func NewPostgresStorage(db *sql.DB, logger slog.Handler) (*PostgresStorage, error) {
@@ -24,7 +24,7 @@ func NewPostgresStorage(db *sql.DB, logger slog.Handler) (*PostgresStorage, erro
 	ps := &PostgresStorage{
 		logger: slog.New(logger),
 		db:     db,
-		pSql:   psql,
+		pSQL:   psql,
 	}
 	err := ps.init()
 	return ps, err
@@ -77,7 +77,7 @@ func (ps *PostgresStorage) AddUser(user internal.User) error {
 	} else if !exist {
 		return &gophermart.UsedLoginError{}
 	}
-	queryAddUser := ps.pSql.Insert(
+	queryAddUser := ps.pSQL.Insert(
 		"users",
 	).Columns(
 		"login",
@@ -98,7 +98,7 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 		userBalance   sql.NullFloat64
 		userWithdrawn sql.NullFloat64
 	)
-	query := ps.pSql.Select(
+	query := ps.pSQL.Select(
 		"login", "password", "balance", "withdrawn",
 	).From(
 		"users",
@@ -117,7 +117,7 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 }
 
 func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) {
-	query := ps.pSql.Select(
+	query := ps.pSQL.Select(
 		"id", "user_login", "status", "accrual", "uploaded_at",
 	).From(
 		"orders",
@@ -157,7 +157,7 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 }
 
 func (ps *PostgresStorage) AddOrder(order internal.Order) error {
-	queryUser := ps.pSql.Select(
+	queryUser := ps.pSQL.Select(
 		"user_login",
 	).From(
 		"orders",
@@ -187,7 +187,7 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 		return err
 	}
 
-	orderQuery := ps.pSql.Insert(
+	orderQuery := ps.pSQL.Insert(
 		"orders",
 	).Columns(
 		"id",
@@ -203,7 +203,7 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 		return err
 	}
 
-	balanceQuery := ps.pSql.Update(
+	balanceQuery := ps.pSQL.Update(
 		"users",
 	).Set(
 		"balance",
@@ -227,7 +227,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 	if err != nil {
 		return nil, err
 	}
-	queryWithdraw := ps.pSql.Insert(
+	queryWithdraw := ps.pSQL.Insert(
 		"withdrawals",
 	).Columns(
 		"user_login",
@@ -241,7 +241,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 		tx.Rollback()
 		return nil, err
 	}
-	queryUser := ps.pSql.Update(
+	queryUser := ps.pSQL.Update(
 		"users",
 	).Set(
 		"balance",
@@ -260,7 +260,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 }
 
 func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transaction, error) {
-	query := ps.pSql.Select(
+	query := ps.pSQL.Select(
 		"user_login",
 		"order_id",
 		"amount",
