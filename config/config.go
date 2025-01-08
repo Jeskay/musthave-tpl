@@ -7,6 +7,7 @@ type GophermartConfig struct {
 	AccrualAddress string `env:"ACCRUAL_SYSTEM_ADDRESS"`
 	HashKey        string `env:"HASH_SECRET"`
 	TokenKey       string `env:"TOKEN_SECRET"`
+	TokenExpire    int64  `env:"TOKEN_EXPIRE"`
 	DBConnection   string `env:"DATABASE_URI"`
 }
 

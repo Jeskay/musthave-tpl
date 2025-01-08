@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"musthave_tpl/internal"
+	"musthave_tpl/internal/models"
 	"strconv"
 )
 
@@ -13,11 +13,11 @@ type Order struct {
 
 type OrderStatus string
 
-func (status OrderStatus) ToInternal() internal.OrderStatus {
+func (status OrderStatus) ToModel() models.OrderStatus {
 	if status == Registered {
-		return internal.New
+		return models.New
 	}
-	return internal.OrderStatus(status)
+	return models.OrderStatus(status)
 }
 
 const (
@@ -27,11 +27,11 @@ const (
 	Processed  = "PROCESSED"
 )
 
-func (o Order) ToInternal() (internal.Order, error) {
+func (o Order) ToInternal() (models.Order, error) {
 	id, err := strconv.ParseInt(o.Order, 10, 64)
-	return internal.Order{
+	return models.Order{
 		Number:  id,
-		Status:  o.Status.ToInternal(),
+		Status:  o.Status.ToModel(),
 		Accrual: o.Accrual,
 	}, err
 }

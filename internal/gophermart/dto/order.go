@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"musthave_tpl/internal"
+	"musthave_tpl/internal/models"
 	"strconv"
 )
 
@@ -12,7 +12,7 @@ type Order struct {
 	UploadedAt string  `json:"uploaded_at"`
 }
 
-func NewOrders(orders []internal.Order) []Order {
+func NewOrders(orders []models.Order) []Order {
 	ordersDto := make([]Order, len(orders))
 	for i, order := range orders {
 		ordersDto[i] = Order{

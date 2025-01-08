@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"musthave_tpl/config"
-	"musthave_tpl/internal"
 	"musthave_tpl/internal/loyalty/dto"
+	"musthave_tpl/internal/models"
 	"net/http"
 	"strconv"
 )
@@ -24,7 +24,7 @@ func NewLoyaltyService(config *config.GophermartConfig, logger slog.Handler) *Lo
 	}
 }
 
-func (s *LoyaltyService) LoyaltyAccrual(orderID int64) (*internal.Order, error) {
+func (s *LoyaltyService) LoyaltyAccrual(orderID int64) (*models.Order, error) {
 	param := s.config.AccrualAddress + "/api/orders/" + strconv.FormatInt(orderID, 10)
 	var order dto.Order
 	res, err := s.client.Get(param)

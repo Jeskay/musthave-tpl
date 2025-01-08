@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"log"
 	"musthave_tpl/config"
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/db"
@@ -21,11 +22,16 @@ import (
 
 func main() {
 	var conf config.GophermartConfig
-	zapL := zap.Must(zap.NewProduction())
+	zapL, err := zap.NewProduction()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer zapL.Sync()
 
 	flag.StringVar(&conf.Address, "a", "", "service run address")
 	flag.StringVar(&conf.DBConnection, "d", "", "database connection address")
 	flag.StringVar(&conf.AccrualAddress, "r", "", "accrual service address")
+	flag.Int64Var(&conf.TokenExpire, "e", int64(time.Hour*48), "token expiration time")
 	flag.Parse()
 
 	if err := env.Parse(&conf); err != nil {

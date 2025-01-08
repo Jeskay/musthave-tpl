@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"musthave_tpl/internal"
+	"musthave_tpl/internal/models"
 	"strconv"
 )
 
@@ -11,7 +11,7 @@ type Withdrawal struct {
 	ProcessedAt string  `json:"processed_at,omitempty"`
 }
 
-func NewWithdrawals(transactions []internal.Transaction) []Withdrawal {
+func NewWithdrawals(transactions []models.Transaction) []Withdrawal {
 	withdrawals := make([]Withdrawal, len(transactions))
 	for i, t := range transactions {
 		withdrawals[i] = Withdrawal{

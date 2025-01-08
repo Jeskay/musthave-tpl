@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
-	"musthave_tpl/internal"
 	"musthave_tpl/internal/gophermart"
+	"musthave_tpl/internal/models"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -57,7 +57,7 @@ func (ps *PostgresStorage) init() error {
 	return err
 }
 
-func (ps *PostgresStorage) UserExist(user internal.User) (bool, error) {
+func (ps *PostgresStorage) UserExist(user models.User) (bool, error) {
 	row := ps.db.QueryRow(`SELECT COUNT(*) FROM users WHERE login = $1`, user.Login)
 	var count int64
 	err := row.Scan(&count)
@@ -70,7 +70,7 @@ func (ps *PostgresStorage) UserExist(user internal.User) (bool, error) {
 	return true, nil
 }
 
-func (ps *PostgresStorage) AddUser(user internal.User) error {
+func (ps *PostgresStorage) AddUser(user models.User) error {
 	exist, err := ps.UserExist(user)
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (ps *PostgresStorage) AddUser(user internal.User) error {
 	return nil
 }
 
-func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
+func (ps *PostgresStorage) UserByLogin(login string) (*models.User, error) {
 	var (
 		userLogin     string
 		userPassword  string
@@ -108,7 +108,7 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 	if err := row.Scan(&userLogin, &userPassword, &userBalance, &userWithdrawn); err != nil {
 		return nil, err
 	}
-	return &internal.User{
+	return &models.User{
 		Login:     userLogin,
 		Password:  userPassword,
 		Balance:   userBalance.Float64,
@@ -116,7 +116,7 @@ func (ps *PostgresStorage) UserByLogin(login string) (*internal.User, error) {
 	}, nil
 }
 
-func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) {
+func (ps *PostgresStorage) OrdersByUser(login string) ([]models.Order, error) {
 	query := ps.pSQL.Select(
 		"id", "user_login", "status", "accrual", "uploaded_at",
 	).From(
@@ -132,7 +132,7 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 	if rows.Err() != nil {
 		return nil, rows.Err()
 	}
-	var orders []internal.Order
+	var orders []models.Order
 	for rows.Next() {
 		var (
 			id         int64
@@ -145,10 +145,10 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 		if err != nil {
 			return nil, err
 		}
-		orders = append(orders, internal.Order{
-			User:       internal.User{Login: userLogin},
+		orders = append(orders, models.Order{
+			User:       models.User{Login: userLogin},
 			Number:     id,
-			Status:     internal.OrderStatus(status),
+			Status:     models.OrderStatus(status),
 			Accrual:    accrual,
 			UploadedAt: uploadedAt,
 		})
@@ -156,7 +156,7 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]internal.Order, error) 
 	return orders, nil
 }
 
-func (ps *PostgresStorage) AddOrder(order internal.Order) error {
+func (ps *PostgresStorage) AddOrder(order models.Order) error {
 	queryUser := ps.pSQL.Select(
 		"user_login",
 	).From(
@@ -221,7 +221,7 @@ func (ps *PostgresStorage) AddOrder(order internal.Order) error {
 	return err
 }
 
-func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*internal.Transaction, error) {
+func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	ctx := context.Background()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -259,7 +259,7 @@ func (ps *PostgresStorage) AddTransaction(transaction internal.Transaction) (*in
 	return nil, err
 }
 
-func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transaction, error) {
+func (ps *PostgresStorage) TransactionsByUser(login string) ([]models.Transaction, error) {
 	query := ps.pSQL.Select(
 		"user_login",
 		"order_id",
@@ -276,7 +276,7 @@ func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transact
 	if rows.Err() != nil {
 		return nil, err
 	}
-	var transactions []internal.Transaction
+	var transactions []models.Transaction
 	for rows.Next() {
 		var (
 			login  string
@@ -288,7 +288,7 @@ func (ps *PostgresStorage) TransactionsByUser(login string) ([]internal.Transact
 		if err != nil {
 			return nil, err
 		}
-		transactions = append(transactions, internal.Transaction{ID: id, Amount: amount, User: login, Date: date})
+		transactions = append(transactions, models.Transaction{ID: id, Amount: amount, User: login, Date: date})
 	}
 	return transactions, nil
 }
