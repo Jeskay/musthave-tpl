@@ -50,30 +50,7 @@ func (ps *PostgresStorage) OrdersByUser(login string) ([]models.Order, error) {
 }
 
 func (ps *PostgresStorage) AddOrder(order models.Order) error {
-	queryUser := ps.pSQL.Select(
-		"user_login",
-	).From(
-		"orders",
-	).Where(sq.Eq{"id": order.Number})
 
-	rows, err := queryUser.Query()
-	if err != nil {
-		return err
-	}
-	if rows.Err() != nil {
-		return err
-	}
-	if rows.Next() {
-		var login string
-		err := rows.Scan(&login)
-		if err != nil {
-			return err
-		}
-		if login == order.User.Login {
-			return &gophermart.OrderExists{}
-		}
-		return &gophermart.OrderUsed{}
-	}
 	ctx := context.Background()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -88,12 +65,33 @@ func (ps *PostgresStorage) AddOrder(order models.Order) error {
 		"status",
 		"accrual",
 		"uploaded_at",
-	).Values(order.Number, order.User.Login, order.Status, order.Accrual, time.Now())
+	).Values(
+		order.Number,
+		order.User.Login,
+		order.Status,
+		order.Accrual,
+		time.Now(),
+	).Suffix("ON CONFLICT (id) DO NOTHING")
 
-	_, err = orderQuery.ExecContext(ctx)
+	res, err := orderQuery.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return err
+	} else if affected == 0 {
+		tx.Rollback()
+		login, err := ps.GetLoginByOrderId(order.Number)
+		if err != nil {
+			return err
+		}
+		if login == order.User.Login {
+			return &gophermart.OrderExists{}
+		}
+		return &gophermart.OrderUsed{}
 	}
 
 	balanceQuery := ps.pSQL.Update(
@@ -112,4 +110,29 @@ func (ps *PostgresStorage) AddOrder(order models.Order) error {
 	}
 	err = tx.Commit()
 	return err
+}
+
+func (ps *PostgresStorage) GetLoginByOrderId(id int64) (string, error) {
+	queryUser := ps.pSQL.Select(
+		"user_login",
+	).From(
+		"orders",
+	).Where(sq.Eq{"id": id})
+
+	rows, err := queryUser.Query()
+	if err != nil {
+		return "", err
+	}
+	if rows.Err() != nil {
+		return "", err
+	}
+	if rows.Next() {
+		var login string
+		err := rows.Scan(&login)
+		if err != nil {
+			return "", err
+		}
+		return login, nil
+	}
+	return "", nil
 }
