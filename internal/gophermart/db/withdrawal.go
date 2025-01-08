@@ -7,11 +7,11 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (*models.Transaction, error) {
+func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (rows int64, err error) {
 	ctx := context.Background()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	queryWithdraw := ps.pSQL.Insert(
 		"withdrawals",
@@ -25,7 +25,7 @@ func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (*mode
 	_, err = queryWithdraw.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
-		return nil, err
+		return 0, err
 	}
 	queryUser := ps.pSQL.Update(
 		"users",
@@ -36,13 +36,17 @@ func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (*mode
 		"withdrawn",
 		sq.Expr("withdrawn + ?", transaction.Amount),
 	).Where(sq.Eq{"login": transaction.User})
-	_, err = queryUser.ExecContext(ctx)
+	res, err := queryUser.ExecContext(ctx)
 	if err != nil {
 		tx.Rollback()
-		return nil, err
+		return 0, err
+	}
+	rows, err = res.RowsAffected()
+	if err != nil {
+		return 0, err
 	}
 	err = tx.Commit()
-	return nil, err
+	return
 }
 
 func (ps *PostgresStorage) TransactionsByUser(login string) ([]models.Transaction, error) {

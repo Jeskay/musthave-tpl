@@ -7,6 +7,6 @@ type Storage interface {
 	AddUser(user models.User) error
 	AddOrder(order models.Order) error
 	OrdersByUser(login string) ([]models.Order, error)
-	AddTransaction(transaction models.Transaction) (*models.Transaction, error)
+	AddTransaction(transaction models.Transaction) (int64, error)
 	TransactionsByUser(login string) ([]models.Transaction, error)
 }

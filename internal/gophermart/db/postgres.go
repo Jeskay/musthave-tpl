@@ -39,14 +39,14 @@ func (ps *PostgresStorage) init() error {
 			id bigint PRIMARY KEY UNIQUE,
 			status varchar(200),
 			accrual double precision,
-			uploaded_at timestamptz
+			uploaded_at timestamptz DEFAULT NOW()
 		);
 		CREATE TABLE IF NOT EXISTS withdrawals (
 			id SERIAL PRIMARY KEY,
 			user_login varchar(500) REFERENCES users (login),
 			order_id bigint,
 			amount double precision,
-			processed_at timestamptz
+			processed_at timestamptz DEFAULT NOW()
 		);
 	`
 	_, err := ps.db.Exec(query)

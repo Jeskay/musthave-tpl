@@ -64,13 +64,11 @@ func (ps *PostgresStorage) AddOrder(order models.Order) error {
 		"user_login",
 		"status",
 		"accrual",
-		"uploaded_at",
 	).Values(
 		order.Number,
 		order.User.Login,
 		order.Status,
 		order.Accrual,
-		time.Now(),
 	).Suffix("ON CONFLICT (id) DO NOTHING")
 
 	res, err := orderQuery.ExecContext(ctx)
