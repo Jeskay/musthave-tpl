@@ -7,7 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (rows int64, err error) {
+func (ps *PostgresRepository) AddTransaction(transaction models.Transaction) (rows int64, err error) {
 	ctx := context.Background()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -49,7 +49,7 @@ func (ps *PostgresStorage) AddTransaction(transaction models.Transaction) (rows 
 	return
 }
 
-func (ps *PostgresStorage) TransactionsByUser(login string) ([]models.Transaction, error) {
+func (ps *PostgresRepository) TransactionsByUser(login string) ([]models.Transaction, error) {
 	query := ps.pSQL.Select(
 		"user_login",
 		"order_id",

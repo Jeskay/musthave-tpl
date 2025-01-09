@@ -4,6 +4,7 @@ import (
 	"io"
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/dto"
+	"musthave_tpl/internal/models"
 	"musthave_tpl/internal/utils"
 	"net/http"
 	"strconv"
@@ -49,11 +50,11 @@ func PostOrder(svc *gophermart.GophermartService) gin.HandlerFunc {
 			return
 		}
 		if err := svc.AddOrder(login, orderID); err != nil {
-			if _, ok := err.(*gophermart.OrderExists); ok {
+			if _, ok := err.(*models.OrderExists); ok {
 				ctx.AbortWithStatus(http.StatusOK)
 				return
 			}
-			if _, ok := err.(*gophermart.OrderUsed); ok {
+			if _, ok := err.(*models.OrderUsed); ok {
 				ctx.AbortWithStatus(http.StatusConflict)
 				return
 			}

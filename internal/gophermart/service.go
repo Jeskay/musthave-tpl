@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"musthave_tpl/config"
-	"musthave_tpl/internal"
 	"musthave_tpl/internal/auth"
+	"musthave_tpl/internal/gophermart/db"
 	"musthave_tpl/internal/loyalty"
 	"musthave_tpl/internal/models"
 	"musthave_tpl/internal/utils"
@@ -14,14 +14,14 @@ import (
 )
 
 type GophermartService struct {
-	storage        internal.Storage
+	storage        db.GeneralRepository
 	authService    *auth.AuthService
 	loyaltyService *loyalty.LoyaltyService
 	logger         *slog.Logger
 	config         *config.GophermartConfig
 }
 
-func NewGophermartService(config *config.GophermartConfig, logger slog.Handler, storage internal.Storage) *GophermartService {
+func NewGophermartService(config *config.GophermartConfig, logger slog.Handler, storage db.GeneralRepository) *GophermartService {
 	return &GophermartService{
 		logger:         slog.New(logger),
 		storage:        storage,
@@ -38,16 +38,16 @@ func (s *GophermartService) Login(login string, password string) (string, error)
 	}
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
-		return "", &IncorrectPassword{}
+		return "", &models.IncorrectPassword{}
 	}
 	passHash, err := hex.DecodeString(user.Password)
 	if err != nil {
-		return "", &IncorrectPassword{}
+		return "", &models.IncorrectPassword{}
 	}
 	if bytes.Equal(hash, passHash) {
 		return s.authService.CreateToken(login)
 	}
-	return "", &IncorrectPassword{}
+	return "", &models.IncorrectPassword{}
 }
 
 func (s *GophermartService) Authenticate(tokenString string) (*models.User, error) {
@@ -115,7 +115,7 @@ func (s *GophermartService) MakeWithdrawal(login string, order int64, amount flo
 		return nil
 	}
 	if user.Balance < amount {
-		return &NotEnoughFunds{}
+		return &models.NotEnoughFunds{}
 	}
 	_, err = s.storage.AddTransaction(models.Transaction{User: login, Amount: amount, ID: order, Date: time.Now()})
 	if err != nil {

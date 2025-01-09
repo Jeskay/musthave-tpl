@@ -3,6 +3,7 @@ package handlers
 import (
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/dto"
+	"musthave_tpl/internal/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func Login(svc *gophermart.GophermartService) gin.HandlerFunc {
 		}
 		token, err := svc.Login(user.Login, user.Password)
 		if err != nil {
-			if _, ok := err.(*gophermart.IncorrectPassword); ok {
+			if _, ok := err.(*models.IncorrectPassword); ok {
 				ctx.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
@@ -38,7 +39,7 @@ func Register(svc *gophermart.GophermartService) gin.HandlerFunc {
 		}
 		token, err := svc.Register(user.Login, user.Password)
 		if err != nil {
-			if _, ok := err.(*gophermart.UsedLoginError); ok {
+			if _, ok := err.(*models.UsedLoginError); ok {
 				ctx.AbortWithStatus(http.StatusConflict)
 				return
 			}

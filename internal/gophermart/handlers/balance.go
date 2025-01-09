@@ -3,6 +3,7 @@ package handlers
 import (
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/dto"
+	"musthave_tpl/internal/models"
 	"net/http"
 	"strconv"
 
@@ -37,7 +38,7 @@ func MakeWithdrawal(svc *gophermart.GophermartService) gin.HandlerFunc {
 		}
 		err = svc.MakeWithdrawal(login, id, withdrawal.Sum)
 		if err != nil {
-			if _, ok := err.(*gophermart.NotEnoughFunds); ok {
+			if _, ok := err.(*models.NotEnoughFunds); ok {
 				ctx.AbortWithStatus(http.StatusPaymentRequired)
 				return
 			}

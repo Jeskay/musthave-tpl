@@ -2,13 +2,12 @@ package db
 
 import (
 	"database/sql"
-	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/models"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (ps *PostgresStorage) AddUser(user models.User) error {
+func (ps *PostgresRepository) AddUser(user models.User) error {
 	queryAddUser := ps.pSQL.Insert(
 		"users",
 	).Columns(
@@ -26,12 +25,12 @@ func (ps *PostgresStorage) AddUser(user models.User) error {
 	if affected, err := res.RowsAffected(); err != nil {
 		return err
 	} else if affected == 0 {
-		return &gophermart.UsedLoginError{}
+		return &models.UsedLoginError{}
 	}
 	return nil
 }
 
-func (ps *PostgresStorage) UserByLogin(login string) (*models.User, error) {
+func (ps *PostgresRepository) UserByLogin(login string) (*models.User, error) {
 	var (
 		userLogin     string
 		userPassword  string
