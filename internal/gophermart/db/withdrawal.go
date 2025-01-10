@@ -8,6 +8,9 @@ import (
 )
 
 func (ps *PostgresRepository) AddTransaction(ctx context.Context, transaction models.Transaction) (rows int64, err error) {
+	ctx, cancelCtx := context.WithTimeout(ctx, ps.txTimeout)
+	defer cancelCtx()
+
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err

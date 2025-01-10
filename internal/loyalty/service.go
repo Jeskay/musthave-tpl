@@ -8,10 +8,13 @@ import (
 	"musthave_tpl/internal/models"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Loyalty interface {
-	LoyaltyAccrual(orderID int64) (*models.Order, error)
+	LoyaltyAccrual(ctx *gin.Context, orderID int64) (*models.Order, error)
 }
 
 type LoyaltyService struct {
@@ -24,11 +27,13 @@ func NewLoyaltyService(config *config.Config, logger slog.Handler) *LoyaltyServi
 	return &LoyaltyService{
 		logger: slog.New(logger),
 		config: config,
-		client: http.DefaultClient,
+		client: &http.Client{
+			Timeout: time.Second * 5,
+		},
 	}
 }
 
-func (s *LoyaltyService) LoyaltyAccrual(orderID int64) (*models.Order, error) {
+func (s *LoyaltyService) LoyaltyAccrual(ctx *gin.Context, orderID int64) (*models.Order, error) {
 	param := s.config.AccrualAddress + "/api/orders/" + strconv.FormatInt(orderID, 10)
 	var order dto.Order
 	res, err := s.client.Get(param)

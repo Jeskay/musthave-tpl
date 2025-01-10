@@ -78,7 +78,7 @@ func (s *GophermartService) Register(ctx *gin.Context, login string, password st
 }
 
 func (s *GophermartService) AddOrder(ctx *gin.Context, login string, orderID int64) error {
-	order, err := s.loyaltyService.LoyaltyAccrual(orderID)
+	order, err := s.loyaltyService.LoyaltyAccrual(ctx, orderID)
 	if err != nil {
 		s.logger.Error("loyalty service", slog.String("error", err.Error()))
 		return err

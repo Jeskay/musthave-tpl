@@ -6,6 +6,7 @@ import (
 	"embed"
 	"log/slog"
 	"musthave_tpl/internal/models"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/pressly/goose/v3"
@@ -14,9 +15,10 @@ import (
 )
 
 type PostgresRepository struct {
-	db     *sql.DB
-	logger *slog.Logger
-	pSQL   sq.StatementBuilderType
+	db        *sql.DB
+	logger    *slog.Logger
+	pSQL      sq.StatementBuilderType
+	txTimeout time.Duration
 }
 type GeneralRepository interface {
 	OrdersByUser(ctx context.Context, login string) ([]models.Order, error)
@@ -38,9 +40,10 @@ var embedMigrations embed.FS
 func NewPostgresStorage(db *sql.DB, logger slog.Handler) (*PostgresRepository, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)
 	ps := &PostgresRepository{
-		logger: slog.New(logger),
-		db:     db,
-		pSQL:   psql,
+		logger:    slog.New(logger),
+		db:        db,
+		pSQL:      psql,
+		txTimeout: time.Second * 5,
 	}
 	err := ps.init()
 	return ps, err

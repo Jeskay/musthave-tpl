@@ -49,7 +49,8 @@ func (ps *PostgresRepository) OrdersByUser(ctx context.Context, login string) ([
 }
 
 func (ps *PostgresRepository) AddOrder(ctx context.Context, order models.Order) error {
-
+	ctx, cancelCtx := context.WithTimeout(ctx, ps.txTimeout)
+	defer cancelCtx()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
