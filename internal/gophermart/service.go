@@ -11,16 +11,18 @@ import (
 	"musthave_tpl/internal/models"
 	"musthave_tpl/internal/utils"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Gophermart interface {
-	Login(login string, password string) (string, error)
-	Register(login string, password string) (string, error)
-	AddOrder(login string, orderID int64) error
-	Orders(login string) ([]models.Order, error)
-	Withdrawals(login string) ([]models.Transaction, error)
-	MakeWithdrawal(login string, order int64, amount float64) error
-	GetUser(login string) (*models.User, error)
+	Login(ctx *gin.Context, login string, password string) (string, error)
+	Register(ctx *gin.Context, login string, password string) (string, error)
+	AddOrder(ctx *gin.Context, login string, orderID int64) error
+	Orders(ctx *gin.Context, login string) ([]models.Order, error)
+	Withdrawals(ctx *gin.Context, login string) ([]models.Transaction, error)
+	MakeWithdrawal(ctx *gin.Context, login string, order int64, amount float64) error
+	GetUser(ctx *gin.Context, login string) (*models.User, error)
 }
 
 type GophermartService struct {
@@ -41,8 +43,8 @@ func NewGophermartService(config *config.Config, logger slog.Handler, storage db
 	}
 }
 
-func (s *GophermartService) Login(login string, password string) (string, error) {
-	user, err := s.storage.UserByLogin(login)
+func (s *GophermartService) Login(ctx *gin.Context, login string, password string) (string, error) {
+	user, err := s.storage.UserByLogin(ctx, login)
 	if err != nil {
 		return "", err
 	}
@@ -60,13 +62,14 @@ func (s *GophermartService) Login(login string, password string) (string, error)
 	return "", &models.IncorrectPassword{}
 }
 
-func (s *GophermartService) Register(login string, password string) (string, error) {
+func (s *GophermartService) Register(ctx *gin.Context, login string, password string) (string, error) {
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
 		s.logger.Error("", slog.String("error", err.Error()))
 		return "", err
 	}
-	err = s.storage.AddUser(models.User{Login: login, Password: hex.EncodeToString(hash)})
+	user := models.User{Login: login, Password: hex.EncodeToString(hash)}
+	err = s.storage.AddUser(ctx, user)
 	if err != nil {
 		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return "", err
@@ -74,7 +77,7 @@ func (s *GophermartService) Register(login string, password string) (string, err
 	return s.authService.CreateToken(login)
 }
 
-func (s *GophermartService) AddOrder(login string, orderID int64) error {
+func (s *GophermartService) AddOrder(ctx *gin.Context, login string, orderID int64) error {
 	order, err := s.loyaltyService.LoyaltyAccrual(orderID)
 	if err != nil {
 		s.logger.Error("loyalty service", slog.String("error", err.Error()))
@@ -87,7 +90,7 @@ func (s *GophermartService) AddOrder(login string, orderID int64) error {
 		}
 	}
 	order.User = models.User{Login: login}
-	err = s.storage.AddOrder(*order)
+	err = s.storage.AddOrder(ctx, *order)
 	if err != nil {
 		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return err
@@ -96,8 +99,8 @@ func (s *GophermartService) AddOrder(login string, orderID int64) error {
 	return nil
 }
 
-func (s *GophermartService) Orders(login string) ([]models.Order, error) {
-	orders, err := s.storage.OrdersByUser(login)
+func (s *GophermartService) Orders(ctx *gin.Context, login string) ([]models.Order, error) {
+	orders, err := s.storage.OrdersByUser(ctx, login)
 	if err != nil {
 		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return nil, err
@@ -105,13 +108,13 @@ func (s *GophermartService) Orders(login string) ([]models.Order, error) {
 	return orders, nil
 }
 
-func (s *GophermartService) Withdrawals(login string) ([]models.Transaction, error) {
-	transactions, err := s.storage.TransactionsByUser(login)
+func (s *GophermartService) Withdrawals(ctx *gin.Context, login string) ([]models.Transaction, error) {
+	transactions, err := s.storage.TransactionsByUser(ctx, login)
 	return transactions, err
 }
 
-func (s *GophermartService) MakeWithdrawal(login string, order int64, amount float64) error {
-	user, err := s.storage.UserByLogin(login)
+func (s *GophermartService) MakeWithdrawal(ctx *gin.Context, login string, order int64, amount float64) error {
+	user, err := s.storage.UserByLogin(ctx, login)
 	if err != nil {
 		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return nil
@@ -119,7 +122,8 @@ func (s *GophermartService) MakeWithdrawal(login string, order int64, amount flo
 	if user.Balance < amount {
 		return &models.NotEnoughFunds{}
 	}
-	_, err = s.storage.AddTransaction(models.Transaction{User: login, Amount: amount, ID: order, Date: time.Now()})
+	transactions := models.Transaction{User: login, Amount: amount, ID: order, Date: time.Now()}
+	_, err = s.storage.AddTransaction(ctx, transactions)
 	if err != nil {
 		s.logger.Error("storage request failed", slog.String("error", err.Error()))
 		return err
@@ -127,7 +131,7 @@ func (s *GophermartService) MakeWithdrawal(login string, order int64, amount flo
 	return nil
 }
 
-func (s *GophermartService) GetUser(login string) (*models.User, error) {
-	user, err := s.storage.UserByLogin(login)
+func (s *GophermartService) GetUser(ctx *gin.Context, login string) (*models.User, error) {
+	user, err := s.storage.UserByLogin(ctx, login)
 	return user, err
 }

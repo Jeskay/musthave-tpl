@@ -1,13 +1,14 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"musthave_tpl/internal/models"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (ps *PostgresRepository) AddUser(user models.User) error {
+func (ps *PostgresRepository) AddUser(ctx context.Context, user models.User) error {
 	queryAddUser := ps.pSQL.Insert(
 		"users",
 	).Columns(
@@ -30,7 +31,7 @@ func (ps *PostgresRepository) AddUser(user models.User) error {
 	return nil
 }
 
-func (ps *PostgresRepository) UserByLogin(login string) (*models.User, error) {
+func (ps *PostgresRepository) UserByLogin(ctx context.Context, login string) (*models.User, error) {
 	var (
 		userLogin     string
 		userPassword  string

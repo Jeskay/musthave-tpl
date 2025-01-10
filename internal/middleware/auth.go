@@ -17,7 +17,7 @@ func (m *MiddlewareService) Authorize(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	user, err := m.dbSvc.UserByLogin(login)
+	user, err := m.dbSvc.UserByLogin(ctx, login)
 	if err != nil || user == nil {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return

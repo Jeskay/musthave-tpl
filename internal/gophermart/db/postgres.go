@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"log/slog"
@@ -18,17 +19,17 @@ type PostgresRepository struct {
 	pSQL   sq.StatementBuilderType
 }
 type GeneralRepository interface {
-	OrdersByUser(string) ([]models.Order, error)
-	AddOrder(order models.Order) error
-	AddUser(user models.User) error
-	UserByLogin(login string) (*models.User, error)
-	AddTransaction(transaction models.Transaction) (rows int64, err error)
-	TransactionsByUser(login string) ([]models.Transaction, error)
+	OrdersByUser(ctx context.Context, login string) ([]models.Order, error)
+	AddOrder(ctx context.Context, order models.Order) error
+	AddUser(ctx context.Context, user models.User) error
+	UserByLogin(ctx context.Context, login string) (*models.User, error)
+	AddTransaction(ctx context.Context, transaction models.Transaction) (rows int64, err error)
+	TransactionsByUser(ctx context.Context, login string) ([]models.Transaction, error)
 }
 
 type UserRepository interface {
-	AddUser(user models.User) error
-	UserByLogin(login string) (*models.User, error)
+	AddUser(ctx context.Context, user models.User) error
+	UserByLogin(ctx context.Context, login string) (*models.User, error)
 }
 
 //go:embed migrations/*.sql

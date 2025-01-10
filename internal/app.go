@@ -56,7 +56,7 @@ func (a *App) Login(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-	token, err := a.gophermartSvc.Login(user.Login, user.Password)
+	token, err := a.gophermartSvc.Login(ctx, user.Login, user.Password)
 	if err != nil {
 		if _, ok := err.(*models.IncorrectPassword); ok {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -75,7 +75,7 @@ func (a *App) Register(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-	token, err := a.gophermartSvc.Register(user.Login, user.Password)
+	token, err := a.gophermartSvc.Register(ctx, user.Login, user.Password)
 	if err != nil {
 		if _, ok := err.(*models.UsedLoginError); ok {
 			ctx.AbortWithStatus(http.StatusConflict)
@@ -90,7 +90,7 @@ func (a *App) Register(ctx *gin.Context) {
 
 func (a *App) Balance(ctx *gin.Context) {
 	login := ctx.GetString("Login")
-	user, err := a.gophermartSvc.GetUser(login)
+	user, err := a.gophermartSvc.GetUser(ctx, login)
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -111,7 +111,7 @@ func (a *App) MakeWithdrawal(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-	err = a.gophermartSvc.MakeWithdrawal(login, id, withdrawal.Sum)
+	err = a.gophermartSvc.MakeWithdrawal(ctx, login, id, withdrawal.Sum)
 	if err != nil {
 		if _, ok := err.(*models.NotEnoughFunds); ok {
 			ctx.AbortWithStatus(http.StatusPaymentRequired)
@@ -125,7 +125,7 @@ func (a *App) MakeWithdrawal(ctx *gin.Context) {
 
 func (a *App) Withdrawals(ctx *gin.Context) {
 	login := ctx.GetString("Login")
-	withdrawals, err := a.gophermartSvc.Withdrawals(login)
+	withdrawals, err := a.gophermartSvc.Withdrawals(ctx, login)
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -143,7 +143,7 @@ func (a *App) Orders(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	orders, err := a.gophermartSvc.Orders(login)
+	orders, err := a.gophermartSvc.Orders(ctx, login)
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -171,7 +171,7 @@ func (a *App) CreateOrder(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnprocessableEntity)
 		return
 	}
-	if err := a.gophermartSvc.AddOrder(login, orderID); err != nil {
+	if err := a.gophermartSvc.AddOrder(ctx, login, orderID); err != nil {
 		if _, ok := err.(*models.OrderExists); ok {
 			ctx.AbortWithStatus(http.StatusOK)
 			return

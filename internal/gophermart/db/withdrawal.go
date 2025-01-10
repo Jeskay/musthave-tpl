@@ -7,8 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (ps *PostgresRepository) AddTransaction(transaction models.Transaction) (rows int64, err error) {
-	ctx := context.Background()
+func (ps *PostgresRepository) AddTransaction(ctx context.Context, transaction models.Transaction) (rows int64, err error) {
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -49,7 +48,7 @@ func (ps *PostgresRepository) AddTransaction(transaction models.Transaction) (ro
 	return
 }
 
-func (ps *PostgresRepository) TransactionsByUser(login string) ([]models.Transaction, error) {
+func (ps *PostgresRepository) TransactionsByUser(ctx context.Context, login string) ([]models.Transaction, error) {
 	query := ps.pSQL.Select(
 		"user_login",
 		"order_id",

@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-func (ps *PostgresRepository) OrdersByUser(login string) ([]models.Order, error) {
+func (ps *PostgresRepository) OrdersByUser(ctx context.Context, login string) ([]models.Order, error) {
 	query := ps.pSQL.Select(
 		"id", "user_login", "status", "accrual", "uploaded_at",
 	).From(
@@ -48,9 +48,8 @@ func (ps *PostgresRepository) OrdersByUser(login string) ([]models.Order, error)
 	return orders, nil
 }
 
-func (ps *PostgresRepository) AddOrder(order models.Order) error {
+func (ps *PostgresRepository) AddOrder(ctx context.Context, order models.Order) error {
 
-	ctx := context.Background()
 	tx, err := ps.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -81,7 +80,7 @@ func (ps *PostgresRepository) AddOrder(order models.Order) error {
 		return err
 	} else if affected == 0 {
 		tx.Rollback()
-		login, err := ps.GetLoginByOrderID(order.Number)
+		login, err := ps.GetLoginByOrderID(ctx, order.Number)
 		if err != nil {
 			return err
 		}
@@ -109,7 +108,7 @@ func (ps *PostgresRepository) AddOrder(order models.Order) error {
 	return err
 }
 
-func (ps *PostgresRepository) GetLoginByOrderID(id int64) (string, error) {
+func (ps *PostgresRepository) GetLoginByOrderID(ctx context.Context, id int64) (string, error) {
 	queryUser := ps.pSQL.Select(
 		"user_login",
 	).From(
