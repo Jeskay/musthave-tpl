@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"musthave_tpl/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,18 +10,6 @@ import (
 type Claims struct {
 	jwt.RegisteredClaims
 	Login string
-}
-
-type AuthService struct {
-	SecretKey []byte
-	ExpiresAt time.Duration
-}
-
-func NewAuthService(conf *config.GophermartConfig) *AuthService {
-	return &AuthService{
-		SecretKey: []byte(conf.TokenKey),
-		ExpiresAt: time.Duration(conf.TokenExpire),
-	}
 }
 
 func (s *AuthService) CreateToken(login string) (string, error) {

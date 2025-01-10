@@ -10,13 +10,17 @@ import (
 	"strconv"
 )
 
+type Loyalty interface {
+	LoyaltyAccrual(orderID int64) (*models.Order, error)
+}
+
 type LoyaltyService struct {
 	logger *slog.Logger
-	config *config.GophermartConfig
+	config *config.Config
 	client *http.Client
 }
 
-func NewLoyaltyService(config *config.GophermartConfig, logger slog.Handler) *LoyaltyService {
+func NewLoyaltyService(config *config.Config, logger slog.Handler) *LoyaltyService {
 	return &LoyaltyService{
 		logger: slog.New(logger),
 		config: config,

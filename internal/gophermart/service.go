@@ -13,21 +13,31 @@ import (
 	"time"
 )
 
-type GophermartService struct {
-	storage        db.GeneralRepository
-	authService    *auth.AuthService
-	loyaltyService *loyalty.LoyaltyService
-	logger         *slog.Logger
-	config         *config.GophermartConfig
+type Gophermart interface {
+	Login(login string, password string) (string, error)
+	Register(login string, password string) (string, error)
+	AddOrder(login string, orderID int64) error
+	Orders(login string) ([]models.Order, error)
+	Withdrawals(login string) ([]models.Transaction, error)
+	MakeWithdrawal(login string, order int64, amount float64) error
+	GetUser(login string) (*models.User, error)
 }
 
-func NewGophermartService(config *config.GophermartConfig, logger slog.Handler, storage db.GeneralRepository) *GophermartService {
+type GophermartService struct {
+	storage        db.GeneralRepository
+	authService    auth.Authentication
+	loyaltyService loyalty.Loyalty
+	logger         *slog.Logger
+	config         *config.Config
+}
+
+func NewGophermartService(config *config.Config, logger slog.Handler, storage db.GeneralRepository, authSvc auth.Authentication, loyaltySvc loyalty.Loyalty) *GophermartService {
 	return &GophermartService{
 		logger:         slog.New(logger),
 		storage:        storage,
 		config:         config,
-		authService:    auth.NewAuthService(config),
-		loyaltyService: loyalty.NewLoyaltyService(config, logger),
+		authService:    authSvc,
+		loyaltyService: loyaltySvc,
 	}
 }
 
@@ -48,14 +58,6 @@ func (s *GophermartService) Login(login string, password string) (string, error)
 		return s.authService.CreateToken(login)
 	}
 	return "", &models.IncorrectPassword{}
-}
-
-func (s *GophermartService) Authenticate(tokenString string) (*models.User, error) {
-	login, err := s.authService.VerifyToken(tokenString)
-	if err != nil {
-		return nil, err
-	}
-	return s.storage.UserByLogin(login)
 }
 
 func (s *GophermartService) Register(login string, password string) (string, error) {

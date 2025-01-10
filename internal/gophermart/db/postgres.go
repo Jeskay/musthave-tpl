@@ -26,6 +26,11 @@ type GeneralRepository interface {
 	TransactionsByUser(login string) ([]models.Transaction, error)
 }
 
+type UserRepository interface {
+	AddUser(user models.User) error
+	UserByLogin(login string) (*models.User, error)
+}
+
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 

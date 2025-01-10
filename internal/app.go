@@ -2,10 +2,8 @@ package internal
 
 import (
 	"io"
-	"musthave_tpl/internal/auth"
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/dto"
-	"musthave_tpl/internal/loyalty"
 	"musthave_tpl/internal/middleware"
 	"musthave_tpl/internal/models"
 	"musthave_tpl/internal/utils"
@@ -16,14 +14,14 @@ import (
 )
 
 type App struct {
-	gophermartSvc *gophermart.GophermartService
-	middlewareSvc *middleware.MiddlewareService
+	gophermartSvc gophermart.Gophermart
+	middlewareSvc middleware.Middleware
 }
 
-func NewApp(authSvc *auth.AuthService, gophermartSvc *gophermart.GophermartService, loyatySvc loyalty.LoyaltyService) App {
+func NewApp(gophermartSvc gophermart.Gophermart, middleware middleware.Middleware) App {
 	return App{
 		gophermartSvc: gophermartSvc,
-		middlewareSvc: middleware.NewMiddleware(authSvc, gophermartSvc),
+		middlewareSvc: middleware,
 	}
 }
 
