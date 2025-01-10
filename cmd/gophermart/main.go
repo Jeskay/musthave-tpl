@@ -6,9 +6,11 @@ import (
 	"flag"
 	"log"
 	"musthave_tpl/config"
+	"musthave_tpl/internal"
+	"musthave_tpl/internal/auth"
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/db"
-	"musthave_tpl/internal/gophermart/routes"
+	"musthave_tpl/internal/loyalty"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,9 +48,12 @@ func main() {
 	if err != nil {
 		zapL.Fatal("failed to initialize database", zap.Error(err))
 	}
-	service := gophermart.NewGophermartService(&conf, zapslog.NewHandler(zapL.Core()), storage)
-
-	r := routes.Init(service)
+	app := internal.NewApp(
+		auth.NewAuthService(&conf),
+		gophermart.NewGophermartService(&conf, zapslog.NewHandler(zapL.Core()), storage),
+		*loyalty.NewLoyaltyService(&conf, zapslog.NewHandler(zapL.Core())),
+	)
+	r := app.Router()
 	server := &http.Server{
 		Addr:    conf.Address,
 		Handler: r.Handler(),
