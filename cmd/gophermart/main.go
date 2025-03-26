@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
+	"github.com/gin-contrib/pprof"
 	"go.uber.org/zap"
 	"go.uber.org/zap/exp/zapslog"
 )
@@ -67,6 +68,7 @@ func initHelper(conf config.Config, logger *zap.Logger) *http.Server {
 		middlewareService,
 	)
 	r := app.Router()
+	pprof.Register(r)
 	return &http.Server{
 		Addr:    conf.Address,
 		Handler: r.Handler(),

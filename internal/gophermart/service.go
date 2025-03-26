@@ -50,16 +50,16 @@ func (s *GophermartService) Login(ctx *gin.Context, login string, password strin
 	}
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
-		return "", &models.IncorrectPassword{}
+		return "", models.IncorrectPassword
 	}
 	passHash, err := hex.DecodeString(user.Password)
 	if err != nil {
-		return "", &models.IncorrectPassword{}
+		return "", models.IncorrectPassword
 	}
 	if bytes.Equal(hash, passHash) {
 		return s.authService.CreateToken(login)
 	}
-	return "", &models.IncorrectPassword{}
+	return "", models.IncorrectPassword
 }
 
 func (s *GophermartService) Register(ctx *gin.Context, login string, password string) (string, error) {
@@ -120,7 +120,7 @@ func (s *GophermartService) MakeWithdrawal(ctx *gin.Context, login string, order
 		return nil
 	}
 	if user.Balance < amount {
-		return &models.NotEnoughFunds{}
+		return models.NotEnoughFunds
 	}
 	transactions := models.Transaction{User: login, Amount: amount, ID: order, Date: time.Now()}
 	_, err = s.storage.AddTransaction(ctx, transactions)

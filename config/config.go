@@ -1,6 +1,9 @@
 package config
 
-import "crypto/rand"
+import (
+	"crypto/rand"
+	"time"
+)
 
 type Config struct {
 	Address        string `env:"RUN_ADDRESS"`
@@ -23,7 +26,8 @@ func NewGophermartConfig() Config {
 		token2 = []byte("defaultHash")
 	}
 	return Config{
-		TokenKey: string(token1),
-		HashKey:  string(token2),
+		TokenKey:    string(token1),
+		TokenExpire: int64(time.Hour * 48),
+		HashKey:     string(token2),
 	}
 }

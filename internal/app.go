@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"errors"
 	"io"
 	"musthave_tpl/internal/gophermart"
 	"musthave_tpl/internal/gophermart/dto"
@@ -58,7 +59,7 @@ func (a *App) Login(ctx *gin.Context) {
 	}
 	token, err := a.gophermartSvc.Login(ctx, user.Login, user.Password)
 	if err != nil {
-		if _, ok := err.(*models.IncorrectPassword); ok {
+		if errors.Is(err, models.IncorrectPassword) {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -77,7 +78,7 @@ func (a *App) Register(ctx *gin.Context) {
 	}
 	token, err := a.gophermartSvc.Register(ctx, user.Login, user.Password)
 	if err != nil {
-		if _, ok := err.(*models.UsedLoginError); ok {
+		if errors.Is(err, models.UsedLoginError) {
 			ctx.AbortWithStatus(http.StatusConflict)
 			return
 		}
@@ -113,7 +114,7 @@ func (a *App) MakeWithdrawal(ctx *gin.Context) {
 	}
 	err = a.gophermartSvc.MakeWithdrawal(ctx, login, id, withdrawal.Sum)
 	if err != nil {
-		if _, ok := err.(*models.NotEnoughFunds); ok {
+		if errors.Is(err, models.NotEnoughFunds) {
 			ctx.AbortWithStatus(http.StatusPaymentRequired)
 			return
 		}
@@ -172,11 +173,11 @@ func (a *App) CreateOrder(ctx *gin.Context) {
 		return
 	}
 	if err := a.gophermartSvc.AddOrder(ctx, login, orderID); err != nil {
-		if _, ok := err.(*models.OrderExists); ok {
+		if errors.Is(err, models.OrderExists) {
 			ctx.AbortWithStatus(http.StatusOK)
 			return
 		}
-		if _, ok := err.(*models.OrderUsed); ok {
+		if errors.Is(err, models.OrderUsed) {
 			ctx.AbortWithStatus(http.StatusConflict)
 			return
 		}
