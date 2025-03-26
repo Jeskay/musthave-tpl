@@ -33,9 +33,9 @@ type GophermartService struct {
 	config         *config.Config
 }
 
-func NewGophermartService(config *config.Config, logger slog.Handler, storage db.GeneralRepository, authSvc auth.Authentication, loyaltySvc loyalty.Loyalty) *GophermartService {
+func NewGophermartService(config *config.Config, logger *slog.Logger, storage db.GeneralRepository, authSvc auth.Authentication, loyaltySvc loyalty.Loyalty) *GophermartService {
 	return &GophermartService{
-		logger:         slog.New(logger),
+		logger:         logger,
 		storage:        storage,
 		config:         config,
 		authService:    authSvc,

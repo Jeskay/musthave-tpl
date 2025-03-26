@@ -9,7 +9,7 @@ import (
 
 func BenchmarkShortTokens(b *testing.B) {
 	conf := config.NewGophermartConfig()
-	service := NewAuthService(&conf)
+	service := NewAuthService(conf)
 	count := 10000
 	input := make([]string, count)
 	for i := 0; i < count; i++ {
@@ -38,7 +38,7 @@ func BenchmarkShortTokens(b *testing.B) {
 func BenchmarkLongTokens(b *testing.B) {
 
 	conf := config.NewGophermartConfig()
-	service := NewAuthService(&conf)
+	service := NewAuthService(conf)
 	count := 10000
 	input := make([]string, count)
 	for i := 0; i < count; i++ {

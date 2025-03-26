@@ -23,9 +23,9 @@ type LoyaltyService struct {
 	client *http.Client
 }
 
-func NewLoyaltyService(config *config.Config, logger slog.Handler) *LoyaltyService {
+func NewLoyaltyService(config *config.Config, logger *slog.Logger) *LoyaltyService {
 	return &LoyaltyService{
-		logger: slog.New(logger),
+		logger: logger,
 		config: config,
 		client: &http.Client{
 			Timeout: time.Second * 5,

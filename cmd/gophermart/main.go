@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"log"
+	"log/slog"
 	"musthave_tpl/config"
 	"musthave_tpl/internal"
 	"musthave_tpl/internal/auth"
@@ -19,13 +20,13 @@ import (
 	"time"
 
 	"github.com/caarlos0/env"
-	"github.com/gin-contrib/pprof"
+	"github.com/pkg/profile"
 	"go.uber.org/zap"
 	"go.uber.org/zap/exp/zapslog"
 )
 
 func main() {
-
+	defer profile.Start(profile.MemProfile).Stop()
 	zapL, err := zap.NewProduction()
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +45,7 @@ func main() {
 	shutdownHelper(context.Background(), zapL, server)
 }
 
-func initHelper(conf config.Config, logger *zap.Logger) *http.Server {
+func initHelper(conf *config.Config, logger *zap.Logger) *http.Server {
 	database, err := sql.Open("pgx", conf.DBConnection)
 	if err != nil {
 		logger.Fatal("failed to connect to the database", zap.Error(err))
@@ -53,12 +54,13 @@ func initHelper(conf config.Config, logger *zap.Logger) *http.Server {
 	if err != nil {
 		logger.Fatal("failed to initialize database", zap.Error(err))
 	}
-	authService := auth.NewAuthService(&conf)
-	loyltyService := loyalty.NewLoyaltyService(&conf, zapslog.NewHandler(logger.Core()))
+	sLogger := slog.New(zapslog.NewHandler(logger.Core()))
+	authService := auth.NewAuthService(conf)
+	loyltyService := loyalty.NewLoyaltyService(conf, sLogger)
 	middlewareService := middleware.NewMiddlewareService(authService, repository)
 	gophermartService := gophermart.NewGophermartService(
-		&conf,
-		zapslog.NewHandler(logger.Core()),
+		conf,
+		sLogger,
 		repository,
 		authService,
 		loyltyService,
@@ -68,7 +70,6 @@ func initHelper(conf config.Config, logger *zap.Logger) *http.Server {
 		middlewareService,
 	)
 	r := app.Router()
-	pprof.Register(r)
 	return &http.Server{
 		Addr:    conf.Address,
 		Handler: r.Handler(),
@@ -88,11 +89,10 @@ func shutdownHelper(ctx context.Context, logger *zap.Logger, server *http.Server
 		logger.Fatal("server shutdown", zap.String("", err.Error()))
 	}
 	<-ctx.Done()
-
 	logger.Info("server exiting")
 }
 
-func envParse() (config.Config, error) {
+func envParse() (*config.Config, error) {
 	conf := config.NewGophermartConfig()
 	flag.StringVar(&conf.Address, "a", "", "service run address")
 	flag.StringVar(&conf.DBConnection, "d", "", "database connection address")
@@ -100,6 +100,6 @@ func envParse() (config.Config, error) {
 	flag.Int64Var(&conf.TokenExpire, "e", int64(time.Hour*48), "token expiration time")
 	flag.Parse()
 
-	err := env.Parse(&conf)
+	err := env.Parse(conf)
 	return conf, err
 }

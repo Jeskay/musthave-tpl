@@ -14,7 +14,7 @@ type Config struct {
 	DBConnection   string `env:"DATABASE_URI"`
 }
 
-func NewGophermartConfig() Config {
+func NewGophermartConfig() *Config {
 	token1 := make([]byte, 20)
 	token2 := make([]byte, 20)
 	_, err := rand.Read(token1)
@@ -25,7 +25,7 @@ func NewGophermartConfig() Config {
 	if err != nil {
 		token2 = []byte("defaultHash")
 	}
-	return Config{
+	return &Config{
 		TokenKey:    string(token1),
 		TokenExpire: int64(time.Hour * 48),
 		HashKey:     string(token2),
