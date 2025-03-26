@@ -59,7 +59,7 @@ func (a *App) Login(ctx *gin.Context) {
 	}
 	token, err := a.gophermartSvc.Login(ctx, user.Login, user.Password)
 	if err != nil {
-		if errors.Is(err, models.IncorrectPassword) {
+		if errors.Is(err, models.ErrIncorrectPassword) {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -78,7 +78,7 @@ func (a *App) Register(ctx *gin.Context) {
 	}
 	token, err := a.gophermartSvc.Register(ctx, user.Login, user.Password)
 	if err != nil {
-		if errors.Is(err, models.UsedLoginError) {
+		if errors.Is(err, models.ErrUsedLogin) {
 			ctx.AbortWithStatus(http.StatusConflict)
 			return
 		}
@@ -114,7 +114,7 @@ func (a *App) MakeWithdrawal(ctx *gin.Context) {
 	}
 	err = a.gophermartSvc.MakeWithdrawal(ctx, login, id, withdrawal.Sum)
 	if err != nil {
-		if errors.Is(err, models.NotEnoughFunds) {
+		if errors.Is(err, models.ErrNotEnoughFunds) {
 			ctx.AbortWithStatus(http.StatusPaymentRequired)
 			return
 		}
@@ -173,11 +173,11 @@ func (a *App) CreateOrder(ctx *gin.Context) {
 		return
 	}
 	if err := a.gophermartSvc.AddOrder(ctx, login, orderID); err != nil {
-		if errors.Is(err, models.OrderExists) {
+		if errors.Is(err, models.ErrOrderExists) {
 			ctx.AbortWithStatus(http.StatusOK)
 			return
 		}
-		if errors.Is(err, models.OrderUsed) {
+		if errors.Is(err, models.ErrOrderUsed) {
 			ctx.AbortWithStatus(http.StatusConflict)
 			return
 		}

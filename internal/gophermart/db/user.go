@@ -26,7 +26,7 @@ func (ps *PostgresRepository) AddUser(ctx context.Context, user models.User) err
 	if affected, err := res.RowsAffected(); err != nil {
 		return err
 	} else if affected == 0 {
-		return models.UsedLoginError
+		return models.ErrUsedLogin
 	}
 	return nil
 }

@@ -86,9 +86,9 @@ func (ps *PostgresRepository) AddOrder(ctx context.Context, order models.Order) 
 			return err
 		}
 		if login == order.User.Login {
-			return models.OrderExists
+			return models.ErrOrderExists
 		}
-		return models.OrderUsed
+		return models.ErrOrderUsed
 	}
 
 	balanceQuery := ps.pSQL.Update(
