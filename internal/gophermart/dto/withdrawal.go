@@ -5,12 +5,14 @@ import (
 	"strconv"
 )
 
+// Withdrawal - withdrawal of funds from accrual balance in favor of another order. Describes JSON representation.
 type Withdrawal struct {
 	OrderID     string  `json:"order"`
 	Sum         float64 `json:"sum"`
 	ProcessedAt string  `json:"processed_at,omitempty"`
 }
 
+// NewWithdrawals creates list of JSON objects from a list of internal Withdrawals.
 func NewWithdrawals(transactions []models.Transaction) []Withdrawal {
 	withdrawals := make([]Withdrawal, len(transactions))
 	for i, t := range transactions {

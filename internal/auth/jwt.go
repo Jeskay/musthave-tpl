@@ -7,11 +7,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Claims - each user's JWT claims.
 type Claims struct {
 	jwt.RegisteredClaims
 	Login string
 }
 
+// CreateToken creates new JWT for a user.
 func (s *AuthService) CreateToken(login string) (string, error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -28,6 +30,7 @@ func (s *AuthService) CreateToken(login string) (string, error) {
 	return tokenString, err
 }
 
+// VerifyToken validates JWT and returns user login if token is valid.
 func (s *AuthService) VerifyToken(tokenString string) (string, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {

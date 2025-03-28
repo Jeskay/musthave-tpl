@@ -8,6 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
+// AddUser writes given User instance to the database.
 func (ps *PostgresRepository) AddUser(ctx context.Context, user models.User) error {
 	queryAddUser := ps.pSQL.Insert(
 		"users",
@@ -31,6 +32,7 @@ func (ps *PostgresRepository) AddUser(ctx context.Context, user models.User) err
 	return nil
 }
 
+// UserByLogin returns User instance associated with given login.
 func (ps *PostgresRepository) UserByLogin(ctx context.Context, login string) (*models.User, error) {
 	var (
 		userLogin     string

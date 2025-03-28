@@ -1,3 +1,4 @@
+// Module dto describes objects used in client-server communication.
 package dto
 
 import (
@@ -5,6 +6,7 @@ import (
 	"strconv"
 )
 
+// Order - order, registered in gophermart loyalty system. Describes JSON representation.
 type Order struct {
 	ID         string  `json:"number"`
 	Status     string  `json:"status"`
@@ -12,6 +14,7 @@ type Order struct {
 	UploadedAt string  `json:"uploaded_at"`
 }
 
+// NewOrders Creates list of JSON objects from a list of internal Orders.
 func NewOrders(orders []models.Order) []Order {
 	ordersDto := make([]Order, len(orders))
 	for i, order := range orders {

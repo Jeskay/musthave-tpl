@@ -1,3 +1,4 @@
+// Module loyalty provides access to loyalty service. Loyalty service runs as a standalone HTTP server.
 package loyalty
 
 import (
@@ -13,16 +14,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Loyalty is a client that interacts with loyalty HTTP server.
 type Loyalty interface {
 	LoyaltyAccrual(ctx *gin.Context, orderID int64) (*models.Order, error)
 }
 
+// LoyaltyService is implementation of Loyalty interface.
 type LoyaltyService struct {
 	logger *slog.Logger
 	config *config.Config
 	client *http.Client
 }
 
+// NewLoyaltyService creates new LoyaltyService instance along with HTTP client.
 func NewLoyaltyService(config *config.Config, logger *slog.Logger) *LoyaltyService {
 	return &LoyaltyService{
 		logger: logger,
@@ -33,6 +37,7 @@ func NewLoyaltyService(config *config.Config, logger *slog.Logger) *LoyaltyServi
 	}
 }
 
+// LoyaltyAccrual requests and returns Order information by given orderID.
 func (s *LoyaltyService) LoyaltyAccrual(ctx *gin.Context, orderID int64) (*models.Order, error) {
 	param := s.config.AccrualAddress + "/api/orders/" + strconv.FormatInt(orderID, 10)
 	var order dto.Order

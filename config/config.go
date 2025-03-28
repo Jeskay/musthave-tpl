@@ -1,3 +1,4 @@
+// Module config describes gophermart configuration.
 package config
 
 import (
@@ -5,15 +6,23 @@ import (
 	"time"
 )
 
+// Config - gophermart server configuration.
 type Config struct {
-	Address        string `env:"RUN_ADDRESS"`
+	// Address - server address to run on.
+	Address string `env:"RUN_ADDRESS"`
+	// AccrualAddress - accrual service address.
 	AccrualAddress string `env:"ACCRUAL_SYSTEM_ADDRESS"`
-	HashKey        string `env:"HASH_SECRET"`
-	TokenKey       string `env:"TOKEN_SECRET"`
-	TokenExpire    int64  `env:"TOKEN_EXPIRE"`
-	DBConnection   string `env:"DATABASE_URI"`
+	// HashKey - hash key for user passwords. Optional.
+	HashKey string `env:"HASH_SECRET"`
+	// TokenKey - JWT key for authentication. Optional.
+	TokenKey string `env:"TOKEN_SECRET"`
+	// TokenExpire - JWT expiration time. In milliseconds.
+	TokenExpire int64 `env:"TOKEN_EXPIRE"`
+	// DBConnection - database connection URI.
+	DBConnection string `env:"DATABASE_URI"`
 }
 
+// NewGophermartConfig creates new Config instance.
 func NewGophermartConfig() *Config {
 	token1 := make([]byte, 20)
 	token2 := make([]byte, 20)

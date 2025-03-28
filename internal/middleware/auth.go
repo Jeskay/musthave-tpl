@@ -1,3 +1,4 @@
+// Module middleware contains functions executed before or after processing of incoming requests.
 package middleware
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Authorize performs user authorization before processing the request.
 func (m *MiddlewareService) Authorize(ctx *gin.Context) {
 	token, err := ctx.Cookie("auth_token")
 	if err != nil {
@@ -26,6 +28,7 @@ func (m *MiddlewareService) Authorize(ctx *gin.Context) {
 	ctx.Next()
 }
 
+// Authorize performs client authentication using JWT.
 func (m *MiddlewareService) Authenticate(ctx *gin.Context) {
 	ctx.Next()
 	if v, ok := ctx.Get("Token"); ok {

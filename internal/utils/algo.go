@@ -1,5 +1,7 @@
+// Module utils contains functions used by server but unrelated to core business logic.
 package utils
 
+// LuhnAlgorithm performs verification algorithm on given identification number.
 func LuhnAlgorithm(number string) bool {
 	total := 0
 	isSecondDigit := false

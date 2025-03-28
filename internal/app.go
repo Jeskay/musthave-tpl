@@ -1,3 +1,4 @@
+// Module internal contains business logic of gophermart HTTP server.
 package internal
 
 import (
@@ -14,11 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// App stores instances of Gophermart and Middleware services. Handles incoming HTTP requests and acts as HTTP server.
 type App struct {
 	gophermartSvc gophermart.Gophermart
 	middlewareSvc middleware.Middleware
 }
 
+// NewApp creates new instance of App.
 func NewApp(gophermartSvc gophermart.Gophermart, middleware middleware.Middleware) App {
 	return App{
 		gophermartSvc: gophermartSvc,
@@ -26,6 +29,7 @@ func NewApp(gophermartSvc gophermart.Gophermart, middleware middleware.Middlewar
 	}
 }
 
+// Router registers server endpoints and returns gin router.
 func (a *App) Router() *gin.Engine {
 	r := gin.Default()
 	apiGroup := r.Group("/api/user")
@@ -51,6 +55,7 @@ func (a *App) Router() *gin.Engine {
 	return r
 }
 
+// Login handles login requests.
 func (a *App) Login(ctx *gin.Context) {
 	var user dto.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -70,6 +75,7 @@ func (a *App) Login(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// Register handles register requests.
 func (a *App) Register(ctx *gin.Context) {
 	var user dto.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -89,6 +95,7 @@ func (a *App) Register(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// Balance handles balance requests. Responds with client's balance information.
 func (a *App) Balance(ctx *gin.Context) {
 	login := ctx.GetString("Login")
 	user, err := a.gophermartSvc.GetUser(ctx, login)
@@ -99,6 +106,7 @@ func (a *App) Balance(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.Balance{Balance: float64(user.Balance), Withdrawn: user.Withdrawn})
 }
 
+// MakeWithdrawal handles withdrawal requests.
 func (a *App) MakeWithdrawal(ctx *gin.Context) {
 	var withdrawal dto.Withdrawal
 	login := ctx.GetString("Login")
@@ -124,6 +132,7 @@ func (a *App) MakeWithdrawal(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+// Withdrawals handles withdrawals requests. Responds with list of withdrawal transactions made by client.
 func (a *App) Withdrawals(ctx *gin.Context) {
 	login := ctx.GetString("Login")
 	withdrawals, err := a.gophermartSvc.Withdrawals(ctx, login)
@@ -138,6 +147,7 @@ func (a *App) Withdrawals(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.NewWithdrawals(withdrawals))
 }
 
+// Orders handles orders requests. Responds with list of orders associated with client.
 func (a *App) Orders(ctx *gin.Context) {
 	login := ctx.GetString("Login")
 	if login == "" {
@@ -156,6 +166,7 @@ func (a *App) Orders(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.NewOrders(orders))
 }
 
+// CreateOrder handles create order requests.
 func (a *App) CreateOrder(ctx *gin.Context) {
 	data, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {

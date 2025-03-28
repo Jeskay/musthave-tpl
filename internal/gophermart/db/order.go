@@ -8,6 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
+// OrdersByUser returns orders registered by provided login.
 func (ps *PostgresRepository) OrdersByUser(ctx context.Context, login string) ([]models.Order, error) {
 	query := ps.pSQL.Select(
 		"id", "user_login", "status", "accrual", "uploaded_at",
@@ -48,6 +49,7 @@ func (ps *PostgresRepository) OrdersByUser(ctx context.Context, login string) ([
 	return orders, nil
 }
 
+// AddOrder writes given Order instance to the database.
 func (ps *PostgresRepository) AddOrder(ctx context.Context, order models.Order) error {
 	ctx, cancelCtx := context.WithTimeout(ctx, ps.txTimeout)
 	defer cancelCtx()
@@ -109,6 +111,7 @@ func (ps *PostgresRepository) AddOrder(ctx context.Context, order models.Order) 
 	return err
 }
 
+// GetLoginByOrderID returns login associated with he given Order id.
 func (ps *PostgresRepository) GetLoginByOrderID(ctx context.Context, id int64) (string, error) {
 	queryUser := ps.pSQL.Select(
 		"user_login",

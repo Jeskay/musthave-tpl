@@ -1,3 +1,4 @@
+// Module gophermart contains business logic of gophermart accrual system
 package gophermart
 
 import (
@@ -15,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Gophermart provides methods for interaction with gophermart loyalty system and user database.
 type Gophermart interface {
 	Login(ctx *gin.Context, login string, password string) (string, error)
 	Register(ctx *gin.Context, login string, password string) (string, error)
@@ -25,6 +27,7 @@ type Gophermart interface {
 	GetUser(ctx *gin.Context, login string) (*models.User, error)
 }
 
+// GophermartService is an implementation of Gophermart interface.
 type GophermartService struct {
 	storage        db.GeneralRepository
 	authService    auth.Authentication
@@ -33,6 +36,7 @@ type GophermartService struct {
 	config         *config.Config
 }
 
+// NewGophermartService creates new instance of GophermartService.
 func NewGophermartService(config *config.Config, logger *slog.Logger, storage db.GeneralRepository, authSvc auth.Authentication, loyaltySvc loyalty.Loyalty) *GophermartService {
 	return &GophermartService{
 		logger:         logger,
@@ -43,6 +47,7 @@ func NewGophermartService(config *config.Config, logger *slog.Logger, storage db
 	}
 }
 
+// Login attempts to log into loyalty system using provided login and password information.
 func (s *GophermartService) Login(ctx *gin.Context, login string, password string) (string, error) {
 	user, err := s.storage.UserByLogin(ctx, login)
 	if err != nil {
@@ -62,6 +67,7 @@ func (s *GophermartService) Login(ctx *gin.Context, login string, password strin
 	return "", models.ErrIncorrectPassword
 }
 
+// Register attempts to register new User in loyalty system using provided login and password information.
 func (s *GophermartService) Register(ctx *gin.Context, login string, password string) (string, error) {
 	hash, err := utils.HashBytes([]byte(password), s.config.HashKey)
 	if err != nil {
@@ -77,6 +83,7 @@ func (s *GophermartService) Register(ctx *gin.Context, login string, password st
 	return s.authService.CreateToken(login)
 }
 
+// AddOrder attempts to register new Order in loyalty system and accrue loyalty bonus.
 func (s *GophermartService) AddOrder(ctx *gin.Context, login string, orderID int64) error {
 	order, err := s.loyaltyService.LoyaltyAccrual(ctx, orderID)
 	if err != nil {
@@ -99,6 +106,7 @@ func (s *GophermartService) AddOrder(ctx *gin.Context, login string, orderID int
 	return nil
 }
 
+// Orders returns list of Orders registered in loyalty system under given login.
 func (s *GophermartService) Orders(ctx *gin.Context, login string) ([]models.Order, error) {
 	orders, err := s.storage.OrdersByUser(ctx, login)
 	if err != nil {
@@ -108,11 +116,13 @@ func (s *GophermartService) Orders(ctx *gin.Context, login string) ([]models.Ord
 	return orders, nil
 }
 
+// Withdrawals returns list of withdrawal transactions made by given login.
 func (s *GophermartService) Withdrawals(ctx *gin.Context, login string) ([]models.Transaction, error) {
 	transactions, err := s.storage.TransactionsByUser(ctx, login)
 	return transactions, err
 }
 
+// MakeWithdrawal attempts to register a withdrawal transaction of given amount in favor of new purchase.
 func (s *GophermartService) MakeWithdrawal(ctx *gin.Context, login string, order int64, amount float64) error {
 	user, err := s.storage.UserByLogin(ctx, login)
 	if err != nil {
@@ -131,6 +141,7 @@ func (s *GophermartService) MakeWithdrawal(ctx *gin.Context, login string, order
 	return nil
 }
 
+// GetUser returns User information by given login.
 func (s *GophermartService) GetUser(ctx *gin.Context, login string) (*models.User, error) {
 	user, err := s.storage.UserByLogin(ctx, login)
 	return user, err

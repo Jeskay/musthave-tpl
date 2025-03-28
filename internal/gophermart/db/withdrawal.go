@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
+// AddTransaction writes new Transaction instance to the database and changes User balance accordingly.
 func (ps *PostgresRepository) AddTransaction(ctx context.Context, transaction models.Transaction) (rows int64, err error) {
 	ctx, cancelCtx := context.WithTimeout(ctx, ps.txTimeout)
 	defer cancelCtx()
@@ -51,6 +52,7 @@ func (ps *PostgresRepository) AddTransaction(ctx context.Context, transaction mo
 	return
 }
 
+// TransactionsByUser returns list of transactions associated with provided login.
 func (ps *PostgresRepository) TransactionsByUser(ctx context.Context, login string) ([]models.Transaction, error) {
 	query := ps.pSQL.Select(
 		"user_login",
