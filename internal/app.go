@@ -56,6 +56,26 @@ func (a *App) Router() *gin.Engine {
 }
 
 // Login handles login requests.
+//
+// Method: POST
+// Endpoint: /api/user/login
+//
+// Expected JSON body:
+//
+//	{
+//	    "login": "user_login",
+//	    "password": "user_password"
+//	}
+//
+// Example usage with curl:
+//
+//	curl -X POST http://localhost:8000/api/user/login \
+//			-H "Content-Type: application/json" \
+//			-d '{"login":"Alex", "password":"secret_password"}'
+//
+// On success, returns  HTTP 200 OK with Token cookies.
+// On invalid login/password pair, returns HTTP 401 Unauthorized.
+// On invalid request body, returns HTTP 400 Bad request.
 func (a *App) Login(ctx *gin.Context) {
 	var user dto.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -76,6 +96,26 @@ func (a *App) Login(ctx *gin.Context) {
 }
 
 // Register handles register requests.
+//
+// Method: POST
+// Endpoint: /api/user/register
+//
+// Expected JSON body:
+//
+//	{
+//	    "login": "user_login",
+//	    "password": "user_password"
+//	}
+//
+// Example usage with curl:
+//
+//	curl -X POST http://localhost:8000/api/user/register \
+//			-H "Content-Type: application/json" \
+//			-d '{"login":"Alex", "password":"secret_password"}'
+//
+// On success, returns HTTP 201 Created with Token cookies.
+// If login already registered, returns HTTP 409 Status Conflict.
+// On invalid request body, returns HTTP 400 Bad request.
 func (a *App) Register(ctx *gin.Context) {
 	var user dto.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
@@ -96,6 +136,24 @@ func (a *App) Register(ctx *gin.Context) {
 }
 
 // Balance handles balance requests. Responds with client's balance information.
+//
+// Method: GET
+// Endpoint: /api/user/balance
+//
+// Example usage with curl:
+//
+//	curl -X GET http://localhost:8000/api/user/balance \
+//			-H "Content-Type: application/json" \
+//
+// Example JSON response body:
+//
+//	{
+//		"current": 100.01,
+//		"withdrawn": 10.5
+//	}
+//
+// On success, returns  HTTP 200 OK.
+// On invalid token, returns HTTP 401 Unauthorized.
 func (a *App) Balance(ctx *gin.Context) {
 	login := ctx.GetString("Login")
 	user, err := a.gophermartSvc.GetUser(ctx, login)
@@ -107,6 +165,27 @@ func (a *App) Balance(ctx *gin.Context) {
 }
 
 // MakeWithdrawal handles withdrawal requests.
+//
+// Method: POST
+// Endpoint: /api/user/balance/withdraw
+//
+// Expected JSON body:
+//
+//	{
+//	    "order": "2377225624",
+//	    "sum": 10.95
+//	}
+//
+// Example usage with curl:
+//
+//	curl -X POST http://localhost:8000/api/user/balance/withdraw \
+//			-H "Content-Type: application/json" \
+//			-d '{"order":"2377225624", "sum":"secret_password"}'
+//
+// On success, returns  HTTP 200 OK.
+// If user does not have enough funds, returns HTTP 402 Payment Required.
+// On invalid token, returns HTTP 401 Unauthorized.
+// On invalid request body or order id, returns HTTP 400 Bad request.
 func (a *App) MakeWithdrawal(ctx *gin.Context) {
 	var withdrawal dto.Withdrawal
 	login := ctx.GetString("Login")
@@ -133,6 +212,39 @@ func (a *App) MakeWithdrawal(ctx *gin.Context) {
 }
 
 // Withdrawals handles withdrawals requests. Responds with list of withdrawal transactions made by client.
+//
+// Method: GET
+// Endpoint: /api/user/withdrawals
+//
+// Example usage with curl:
+//
+//	curl -X GET http://localhost:8000/api/user/withdrawals
+//
+// Example JSON response body:
+//
+//	{
+//		[
+//			{
+//				"order": "2377225624",
+//				"sum": 10.5,
+//				"processed_at": "2025-02-01M:8:03Z07:00"
+//			},
+//			{
+//				"order": "2357225624",
+//				"sum": 2,
+//				"processed_at": "2025-02-04F:8:03Z07:00"
+//			},
+//			{
+//				"order": "2377225624",
+//				"sum": 20.1,
+//				"processed_at": "2025-02-01M:8:03Z07:00"
+//			}
+//		]
+//	}
+//
+// On success, returns  HTTP 200 OK.
+// If user have no withdrawals, returns HTTP 204 No Content.
+// On invalid token, returns HTTP 401 Unauthorized.
 func (a *App) Withdrawals(ctx *gin.Context) {
 	login := ctx.GetString("Login")
 	withdrawals, err := a.gophermartSvc.Withdrawals(ctx, login)
@@ -148,6 +260,33 @@ func (a *App) Withdrawals(ctx *gin.Context) {
 }
 
 // Orders handles orders requests. Responds with list of orders associated with client.
+//
+// Method: GET
+// Endpoint: /api/user/orders
+//
+// Example usage with curl:
+//
+//	curl -X GET http://localhost:8000/api/user/orders
+//
+//	Example JSON response body:
+//
+//	[
+//		{
+//			"number": "2377225624",
+//			"status": "PROCESSED",
+//			"accrual": 105.1,
+//			"uploaded_at": "2025-02-01M:8:03Z07:00"
+//		},
+//		{
+//			"number": "2377235624",
+//			"status": "NEW",
+//			"uploaded_at": "2025-02-03T:8:03Z07:00"
+//		},
+//	]
+//
+// On success, returns  HTTP 200 OK.
+// If user have no orders, returns HTTP 204 No Content.
+// On invalid token, returns HTTP 401 Unauthorized.
 func (a *App) Orders(ctx *gin.Context) {
 	login := ctx.GetString("Login")
 	if login == "" {
@@ -167,6 +306,24 @@ func (a *App) Orders(ctx *gin.Context) {
 }
 
 // CreateOrder handles create order requests.
+//
+// Method: POST
+// Endpoint: /api/user/orders
+//
+// Expected body: 9278923470
+//
+// Example usage with curl:
+//
+//	curl -X POST http://localhost:8000/api/user/balance/withdraw \
+//			-H "Content-Type: text/plain" \
+//			-d '9278923470'
+//
+// On success, returns  HTTP 202 Accepted.
+// On failed [Luhn test], returns HTTP 422 Unprocessed Entity.
+// If order was already registered, returns HTTP 409 Conflict.
+// On invalid token, returns HTTP 401 Unauthorized.
+//
+// [Luhn test]: https://en.wikipedia.org/wiki/Luhn_algorithm
 func (a *App) CreateOrder(ctx *gin.Context) {
 	data, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
